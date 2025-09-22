@@ -3,6 +3,7 @@ import QrScanner from 'qr-scanner';
 import { showSuccess, showError } from '../utils/alert';
 import { GetQRCode } from '../api/activity/get-qrcode';
 import { PostMemberActivities } from '../api/activity/post-memebr-activities';
+import { useSessionKeepAlive } from '../hooks/useSessionKeepAlive';
 
 interface QRScannerProps {
     onClose: () => void;
@@ -20,6 +21,18 @@ const QRScannerComponent: React.FC<QRScannerProps> = ({ onClose }) => {
         // 뒤로가기 버튼 클릭 시 카메라를 종료하지 않고 모달만 닫기
         onClose();
     }, [onClose]);
+
+    // 세션 Keep-Alive: 60초마다 /members 호출로 세션 연장
+    useSessionKeepAlive({
+        enabled: true,
+        intervalMs: 60_000,
+        immediate: true,
+        onUnauthorized: () => {
+            showError('세션이 만료되었습니다. 다시 로그인해주세요.');
+            onClose();
+            window.location.href = '/login';
+        },
+    });
 
 
     const handleRefreshCamera = useCallback(async () => {
