@@ -3,6 +3,7 @@ import { ToastContainer, Bounce } from 'react-toastify';
 import Home from './page/home';
 import Login from './page/login';
 import Event from './page/event';
+import Coupon from './page/coupon';
 import NotFound from './page/notfound';
 
 const App: React.FC = () => {
@@ -12,6 +13,7 @@ const App: React.FC = () => {
         <Route path='/' element={<Home />} />
         <Route path='/login' element={<Login />} />
         <Route path='/event' element={<Event />} />
+        <Route path='/coupon' element={<Coupon />} />
         <Route path='*' element={<NotFound />} />
       </Routes>
       <ToastContainer
