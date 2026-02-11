@@ -236,6 +236,10 @@ const CouponPage: React.FC = () => {
   const isAllFilteredMembersSelected = filteredMembersForIssue.length > 0
     && filteredMembersForIssue.every((member) => selectedMemberIdSet.has(member.memberId));
 
+  const selectedAmongFilteredCount = useMemo(() => {
+    return selectedMemberIdsForIssue.filter((memberId) => filteredMemberIdSet.has(memberId)).length;
+  }, [filteredMemberIdSet, selectedMemberIdsForIssue]);
+
   const handleCreateCoupon = async (): Promise<void> => {
     if (!newCouponName.trim()) {
       showError('쿠폰 이름을 입력해주세요.');
@@ -528,7 +532,10 @@ const CouponPage: React.FC = () => {
               전체 선택 해제
             </button>
             <span className="font-size-14px color-gray-60">
-              총 {filteredMembersForIssue.length}명 중 {selectedMemberIdsForIssue.length}명 선택
+              총 {filteredMembersForIssue.length}명 중 {selectedAmongFilteredCount}명 선택
+              <span className="ml-1 color-gray-50">
+                (전체 선택 {selectedMemberIdsForIssue.length}명)
+              </span>
             </span>
           </div>
 
