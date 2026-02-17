@@ -5,6 +5,7 @@ import Login from './page/login';
 import Event from './page/event';
 import Coupon from './page/coupon';
 import FeatureFlagsPage from './page/feature-flags';
+import MemberDemotionPage from './page/member-demotion';
 import NotFound from './page/notfound';
 
 const App: React.FC = () => {
@@ -16,6 +17,7 @@ const App: React.FC = () => {
         <Route path='/event' element={<Event />} />
         <Route path='/coupon' element={<Coupon />} />
         <Route path='/feature-flags' element={<FeatureFlagsPage />} />
+        <Route path='/member-demotion' element={<MemberDemotionPage />} />
         <Route path='*' element={<NotFound />} />
       </Routes>
       <ToastContainer
