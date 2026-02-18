@@ -5,11 +5,13 @@ import { TbRosetteDiscount } from "react-icons/tb";
 import { LuBadgeDollarSign } from "react-icons/lu";
 import { MdOutlineToggleOn } from "react-icons/md";
 import { MdPersonRemoveAlt1 } from "react-icons/md";
+import { FaUsers } from "react-icons/fa";
 
 const MENU = [
   { to: "/", label: "홈 화면", icon: <FiHome size={18} /> },
   { to: "/event", label: "행사", icon: <IoCalendarNumberOutline size={18} /> },
   { to: "/coupon", label: "쿠폰", icon: <TbRosetteDiscount size={18} /> },
+  { to: "/member-management", label: "회원 관리", icon: <FaUsers size={18} /> },
   { to: "/feature-flags", label: "피처 플래그", icon: <MdOutlineToggleOn size={18} /> },
   { to: "/member-demotion", label: "회원 강등", icon: <MdPersonRemoveAlt1 size={18} /> },
   { to: "/point", label: "포인트", icon: <LuBadgeDollarSign size={18} /> },
