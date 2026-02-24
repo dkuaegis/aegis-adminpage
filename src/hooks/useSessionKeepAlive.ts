@@ -28,8 +28,11 @@ export function useSessionKeepAlive({
       if (inFlight || !active) return;
       inFlight = true;
       try {
-        const ok = await Members();
-        if (active && ok === false) {
+        const response = await Members();
+        const isAuthFailure = response.status === 401 || response.status === 403;
+        const isRoleMismatch = response.ok && (!response.data || response.data.role !== 'ADMIN');
+        const unauthorized = isAuthFailure || isRoleMismatch;
+        if (active && unauthorized) {
           onUnauthorized?.();
         }
       } catch {
