@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom"
 
 import { NAV_ITEMS } from "@/components/layout/nav-items"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
