@@ -2,17 +2,18 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import QrScanner from "qr-scanner"
 
 import { GetQRCode } from "@/api/activity/get-qrcode"
-import { PostMemberActivities } from "@/api/activity/post-memebr-activities"
+import { PostMemberActivities } from "@/api/activity/post-member-activities"
 import { Button } from "@/components/ui/button"
 import { useSessionKeepAlive } from "@/hooks/useSessionKeepAlive"
 import { resolveAdminErrorMessage } from "@/lib/errors/admin-error"
 import { showError, showSuccess } from "@/utils/alert"
 
 interface QRScannerProps {
+  activityId: number
   onClose: () => void
 }
 
-const QRScannerComponent: React.FC<QRScannerProps> = ({ onClose }) => {
+const QRScannerComponent: React.FC<QRScannerProps> = ({ activityId, onClose }) => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const scannerRef = useRef<QrScanner | null>(null)
 
@@ -53,8 +54,7 @@ const QRScannerComponent: React.FC<QRScannerProps> = ({ onClose }) => {
       setIsProcessing(true)
 
       try {
-        const storedActivityId = localStorage.getItem("currentActivityId")
-        if (!storedActivityId) {
+        if (!Number.isFinite(activityId) || activityId <= 0) {
           showError("활동 ID를 찾을 수 없습니다.")
           resetProcessingState(0)
           return
@@ -71,7 +71,7 @@ const QRScannerComponent: React.FC<QRScannerProps> = ({ onClose }) => {
           return
         }
 
-        const submitResponse = await PostMemberActivities(Number(storedActivityId), qrResult.data.memberId)
+        const submitResponse = await PostMemberActivities(activityId, qrResult.data.memberId)
         if (!submitResponse.ok) {
           switch (submitResponse.status) {
             case 400:
@@ -103,7 +103,7 @@ const QRScannerComponent: React.FC<QRScannerProps> = ({ onClose }) => {
         resetProcessingState(0)
       }
     },
-    [resetProcessingState],
+    [activityId, resetProcessingState],
   )
 
   useSessionKeepAlive({

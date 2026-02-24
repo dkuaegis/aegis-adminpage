@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type Dispatch, type FormEven
 
 import { deleteActivity } from "@/api/activity/delete-acitivites"
 import { GetActivities } from "@/api/activity/get-activities"
-import { PostMemberActivities as createActivity } from "@/api/activity/post-activities"
+import { createActivity } from "@/api/activity/post-activities"
 import { getActivityById, updateActivity } from "@/api/activity/put-activities"
 import type { Activity } from "@/api/activity/types"
 import { resolveAdminErrorMessage } from "@/lib/errors/admin-error"
@@ -103,8 +103,6 @@ export const useEventPageState = (): UseEventPageStateResult => {
   }, [])
 
   const handleOpenQR = useCallback((eventId: number) => {
-    localStorage.setItem("currentActivityId", eventId.toString())
-
     const url = new URL(window.location.href)
     url.searchParams.set("id", eventId.toString())
     window.history.pushState({}, "", url)

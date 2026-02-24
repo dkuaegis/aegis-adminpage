@@ -90,7 +90,7 @@ export const EventDialogsSection = ({
             <DialogTitle>QR 코드 스캔</DialogTitle>
             <DialogDescription>활동 ID {qrActivityId ?? "-"} 출석 체크를 진행합니다.</DialogDescription>
           </DialogHeader>
-          <QRScannerComponent onClose={onCloseQR} />
+          {qrActivityId !== null && <QRScannerComponent activityId={qrActivityId} onClose={onCloseQR} />}
         </DialogContent>
       </Dialog>
     </>
