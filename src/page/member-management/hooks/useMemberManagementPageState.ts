@@ -127,26 +127,46 @@ export function useMemberManagementPageState(): MemberManagementPageState {
   }
 
   useEffect(() => {
+    let stale = false
+
     const loadSemesters = async (): Promise<void> => {
       setIsSemesterLoading(true)
+      try {
+        const response = await getMemberRecordSemesters()
+        if (stale) {
+          return
+        }
 
-      const response = await getMemberRecordSemesters()
-      if (!response.ok || !response.data) {
-        showError(resolveMemberManagementErrorMessage(response.errorName))
+        if (!response.ok || !response.data) {
+          showError(resolveMemberManagementErrorMessage(response.errorName))
+          const sortedFallback = sortSemestersDesc(FALLBACK_SEMESTER_OPTIONS)
+          setSemesterOptions(sortedFallback)
+          setSelectedYearSemester(sortedFallback[0]?.yearSemester ?? "")
+          return
+        }
+
+        const sortedOptions = sortSemestersDesc(response.data)
+        setSemesterOptions(sortedOptions)
+        setSelectedYearSemester(sortedOptions[0]?.yearSemester ?? "")
+      } catch {
+        if (stale) {
+          return
+        }
+        showError(resolveMemberManagementErrorMessage())
         const sortedFallback = sortSemestersDesc(FALLBACK_SEMESTER_OPTIONS)
         setSemesterOptions(sortedFallback)
         setSelectedYearSemester(sortedFallback[0]?.yearSemester ?? "")
-        setIsSemesterLoading(false)
-        return
+      } finally {
+        if (!stale) {
+          setIsSemesterLoading(false)
+        }
       }
-
-      const sortedOptions = sortSemestersDesc(response.data)
-      setSemesterOptions(sortedOptions)
-      setSelectedYearSemester(sortedOptions[0]?.yearSemester ?? "")
-      setIsSemesterLoading(false)
     }
 
     void loadSemesters()
+    return () => {
+      stale = true
+    }
   }, [])
 
   useEffect(() => {
@@ -154,29 +174,47 @@ export function useMemberManagementPageState(): MemberManagementPageState {
       return
     }
 
+    let stale = false
+
     const loadRecords = async (): Promise<void> => {
       setIsRecordLoading(true)
-      const response = await getMemberRecords({
-        yearSemester: selectedYearSemester,
-        page: recordPageIndex,
-        size: 50,
-        keyword: appliedKeyword || undefined,
-        role: roleFilter === "ALL" ? undefined : roleFilter,
-        sort: sortFilter,
-      })
+      try {
+        const response = await getMemberRecords({
+          yearSemester: selectedYearSemester,
+          page: recordPageIndex,
+          size: 50,
+          keyword: appliedKeyword || undefined,
+          role: roleFilter === "ALL" ? undefined : roleFilter,
+          sort: sortFilter,
+        })
+        if (stale) {
+          return
+        }
 
-      if (!response.ok || !response.data) {
-        showError(resolveMemberManagementErrorMessage(response.errorName))
+        if (!response.ok || !response.data) {
+          showError(resolveMemberManagementErrorMessage(response.errorName))
+          setRecordPage(null)
+          return
+        }
+
+        setRecordPage(response.data)
+      } catch {
+        if (stale) {
+          return
+        }
+        showError(resolveMemberManagementErrorMessage())
         setRecordPage(null)
-        setIsRecordLoading(false)
-        return
+      } finally {
+        if (!stale) {
+          setIsRecordLoading(false)
+        }
       }
-
-      setRecordPage(response.data)
-      setIsRecordLoading(false)
     }
 
     void loadRecords()
+    return () => {
+      stale = true
+    }
   }, [selectedYearSemester, recordPageIndex, appliedKeyword, roleFilter, sortFilter])
 
   useEffect(() => {
@@ -191,32 +229,50 @@ export function useMemberManagementPageState(): MemberManagementPageState {
       return
     }
 
+    let stale = false
+
     const loadMemberDetail = async (): Promise<void> => {
       setIsDetailLoading(true)
+      try {
+        const [timelineResponse, activityResponse] = await Promise.all([
+          getMemberRecordTimeline(selectedMember.memberId),
+          getMemberSemesterActivities(selectedMember.memberId, detailYearSemester),
+        ])
+        if (stale) {
+          return
+        }
 
-      const [timelineResponse, activityResponse] = await Promise.all([
-        getMemberRecordTimeline(selectedMember.memberId),
-        getMemberSemesterActivities(selectedMember.memberId, detailYearSemester),
-      ])
+        if (!timelineResponse.ok || !timelineResponse.data) {
+          showError(resolveMemberManagementErrorMessage(timelineResponse.errorName))
+          setTimelineItems([])
+        } else {
+          setTimelineItems(timelineResponse.data)
+        }
 
-      if (!timelineResponse.ok || !timelineResponse.data) {
-        showError(resolveMemberManagementErrorMessage(timelineResponse.errorName))
+        if (!activityResponse.ok || !activityResponse.data) {
+          showError(resolveMemberManagementErrorMessage(activityResponse.errorName))
+          setActivityDetail(null)
+        } else {
+          setActivityDetail(activityResponse.data)
+        }
+      } catch {
+        if (stale) {
+          return
+        }
+        showError(resolveMemberManagementErrorMessage())
         setTimelineItems([])
-      } else {
-        setTimelineItems(timelineResponse.data)
-      }
-
-      if (!activityResponse.ok || !activityResponse.data) {
-        showError(resolveMemberManagementErrorMessage(activityResponse.errorName))
         setActivityDetail(null)
-      } else {
-        setActivityDetail(activityResponse.data)
+      } finally {
+        if (!stale) {
+          setIsDetailLoading(false)
+        }
       }
-
-      setIsDetailLoading(false)
     }
 
     void loadMemberDetail()
+    return () => {
+      stale = true
+    }
   }, [selectedMember, detailYearSemester])
 
   const handleKeywordInputChange = (value: string): void => {
