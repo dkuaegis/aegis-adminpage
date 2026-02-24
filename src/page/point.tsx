@@ -33,23 +33,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { resolveAdminErrorMessage } from "@/lib/errors/admin-error"
 import { showConfirm, showError, showSuccess } from "@/utils/alert"
 
 type PointTransactionFilter = "ALL" | PointTransactionType
 
-function mapErrorMessage(errorName?: string): string {
-  switch (errorName) {
-    case "MEMBER_NOT_FOUND":
-      return "회원을 찾을 수 없습니다."
-    case "POINT_ACCOUNT_NOT_FOUND":
-      return "포인트 계정을 찾을 수 없습니다."
-    case "POINT_ACTION_AMOUNT_NOT_POSITIVE":
-      return "포인트 금액은 0보다 커야 합니다."
-    case "BAD_REQUEST":
-      return "요청 값이 올바르지 않습니다."
-    default:
-      return "요청 처리에 실패했습니다."
-  }
+const pointErrorOverrides: Record<string, string> = {
+  POINT_ACCOUNT_NOT_FOUND: "포인트 계정을 찾을 수 없습니다.",
+  POINT_ACTION_AMOUNT_NOT_POSITIVE: "포인트 금액은 0보다 커야 합니다.",
+}
+
+const resolvePointErrorMessage = (errorName?: string): string => {
+  return resolveAdminErrorMessage(errorName, { overrides: pointErrorOverrides })
 }
 
 function formatDateTime(value: string): string {
@@ -118,7 +113,7 @@ const PointPage: React.FC = () => {
     })
 
     if (!response.ok || !response.data) {
-      showError(mapErrorMessage(response.errorName))
+      showError(resolvePointErrorMessage(response.errorName))
       setIsLedgerLoading(false)
       return
     }
@@ -131,7 +126,7 @@ const PointPage: React.FC = () => {
     setIsMemberPointLoading(true)
     const response = await getPointMember(memberId)
     if (!response.ok || !response.data) {
-      showError(mapErrorMessage(response.errorName))
+      showError(resolvePointErrorMessage(response.errorName))
       setIsMemberPointLoading(false)
       return
     }
@@ -181,7 +176,7 @@ const PointPage: React.FC = () => {
     setIsMemberSearchLoading(true)
     const response = await searchPointMembers(memberSearchKeyword, 20)
     if (!response.ok || !response.data) {
-      showError(mapErrorMessage(response.errorName))
+      showError(resolvePointErrorMessage(response.errorName))
       setIsMemberSearchLoading(false)
       return
     }
@@ -233,7 +228,7 @@ const PointPage: React.FC = () => {
     })
 
     if (!response.ok || !response.data) {
-      showError(mapErrorMessage(response.errorName))
+      showError(resolvePointErrorMessage(response.errorName))
       setIsSingleSubmitting(false)
       return
     }
@@ -284,7 +279,7 @@ const PointPage: React.FC = () => {
     })
 
     if (!response.ok || !response.data) {
-      showError(mapErrorMessage(response.errorName))
+      showError(resolvePointErrorMessage(response.errorName))
       setIsBatchSubmitting(false)
       return
     }

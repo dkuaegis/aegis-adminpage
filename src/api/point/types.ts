@@ -1,9 +1,4 @@
-export interface ApiResult<T> {
-  ok: boolean;
-  status: number;
-  data?: T;
-  errorName?: string;
-}
+export type { ApiResult } from "@/lib/http/types";
 
 export type PointTransactionType = 'EARN' | 'SPEND';
 

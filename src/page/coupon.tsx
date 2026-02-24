@@ -40,27 +40,22 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { resolveAdminErrorMessage } from "@/lib/errors/admin-error"
 import { showError, showSuccess, showWarning } from "@/utils/alert"
 
 type CouponTab = "coupon" | "code" | "issued"
 
-function mapErrorMessage(errorName?: string): string {
-  switch (errorName) {
-    case "COUPON_ALREADY_EXISTS":
-      return "동일한 이름과 할인 금액을 가진 쿠폰이 이미 존재합니다."
-    case "COUPON_NOT_FOUND":
-      return "쿠폰을 찾을 수 없습니다."
-    case "COUPON_ISSUED_COUPON_EXISTS":
-      return "발급된 쿠폰이 남아 있어 쿠폰을 삭제할 수 없습니다."
-    case "COUPON_CODE_ALREADY_USED_CANNOT_DELETE":
-      return "이미 사용된 쿠폰 코드는 삭제할 수 없습니다."
-    case "ISSUED_COUPON_ALREADY_USED":
-      return "이미 사용된 쿠폰 발급 내역은 삭제할 수 없습니다."
-    case "COUPON_CODE_CANNOT_ISSUE_CODE":
-      return "쿠폰 코드 생성에 실패했습니다. 잠시 후 다시 시도해주세요."
-    default:
-      return "요청 처리에 실패했습니다."
-  }
+const couponErrorOverrides: Record<string, string> = {
+  COUPON_ALREADY_EXISTS: "동일한 이름과 할인 금액을 가진 쿠폰이 이미 존재합니다.",
+  COUPON_NOT_FOUND: "쿠폰을 찾을 수 없습니다.",
+  COUPON_ISSUED_COUPON_EXISTS: "발급된 쿠폰이 남아 있어 쿠폰을 삭제할 수 없습니다.",
+  COUPON_CODE_ALREADY_USED_CANNOT_DELETE: "이미 사용된 쿠폰 코드는 삭제할 수 없습니다.",
+  ISSUED_COUPON_ALREADY_USED: "이미 사용된 쿠폰 발급 내역은 삭제할 수 없습니다.",
+  COUPON_CODE_CANNOT_ISSUE_CODE: "쿠폰 코드 생성에 실패했습니다. 잠시 후 다시 시도해주세요.",
+}
+
+const resolveCouponErrorMessage = (errorName?: string): string => {
+  return resolveAdminErrorMessage(errorName, { overrides: couponErrorOverrides })
 }
 
 function formatDateTime(value: string | null): string {
@@ -120,19 +115,19 @@ const CouponPage: React.FC = () => {
         return nextDrafts
       })
     } else {
-      showError(mapErrorMessage(couponsRes.errorName))
+      showError(resolveCouponErrorMessage(couponsRes.errorName))
     }
 
     if (codesRes.ok && codesRes.data) {
       setCouponCodes([...codesRes.data].sort((a, b) => a.codeCouponId - b.codeCouponId))
     } else {
-      showError(mapErrorMessage(codesRes.errorName))
+      showError(resolveCouponErrorMessage(codesRes.errorName))
     }
 
     if (issuedRes.ok && issuedRes.data) {
       setIssuedCoupons([...issuedRes.data].sort((a, b) => a.issuedCouponId - b.issuedCouponId))
     } else {
-      showError(mapErrorMessage(issuedRes.errorName))
+      showError(resolveCouponErrorMessage(issuedRes.errorName))
     }
 
     if (membersRes.ok && membersRes.data) {
@@ -265,7 +260,7 @@ const CouponPage: React.FC = () => {
 
     const response = await createCoupon(newCouponName, parsedDiscountAmount)
     if (!response.ok) {
-      showError(mapErrorMessage(response.errorName))
+      showError(resolveCouponErrorMessage(response.errorName))
       return
     }
 
@@ -283,7 +278,7 @@ const CouponPage: React.FC = () => {
 
     const response = await updateCouponName(couponId, draftName)
     if (!response.ok) {
-      showError(mapErrorMessage(response.errorName))
+      showError(resolveCouponErrorMessage(response.errorName))
       return
     }
 
@@ -299,7 +294,7 @@ const CouponPage: React.FC = () => {
 
     const response = await deleteCoupon(couponId)
     if (!response.ok) {
-      showError(mapErrorMessage(response.errorName))
+      showError(resolveCouponErrorMessage(response.errorName))
       return
     }
 
@@ -316,7 +311,7 @@ const CouponPage: React.FC = () => {
     const normalizedDescription = newCouponCodeDescription.trim() || null
     const response = await createCouponCode(selectedCouponIdForCode, normalizedDescription)
     if (!response.ok) {
-      showError(mapErrorMessage(response.errorName))
+      showError(resolveCouponErrorMessage(response.errorName))
       return
     }
 
@@ -333,7 +328,7 @@ const CouponPage: React.FC = () => {
 
     const response = await deleteCouponCode(codeCouponId)
     if (!response.ok) {
-      showError(mapErrorMessage(response.errorName))
+      showError(resolveCouponErrorMessage(response.errorName))
       return
     }
 
@@ -354,7 +349,7 @@ const CouponPage: React.FC = () => {
 
     const response = await createIssuedCoupons(selectedCouponIdForIssue, selectedMemberIdsForIssue)
     if (!response.ok) {
-      showError(mapErrorMessage(response.errorName))
+      showError(resolveCouponErrorMessage(response.errorName))
       return
     }
 
@@ -371,7 +366,7 @@ const CouponPage: React.FC = () => {
 
     const response = await deleteIssuedCoupon(issuedCouponId)
     if (!response.ok) {
-      showError(mapErrorMessage(response.errorName))
+      showError(resolveCouponErrorMessage(response.errorName))
       return
     }
 

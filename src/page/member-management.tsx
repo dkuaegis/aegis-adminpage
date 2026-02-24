@@ -32,6 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { resolveAdminErrorMessage } from "@/lib/errors/admin-error"
 import { showError } from "@/utils/alert"
 
 type MemberRoleFilter = "ALL" | MemberRole
@@ -43,17 +44,12 @@ const FALLBACK_SEMESTER_OPTIONS: MemberRecordSemesterOption[] = [
   { yearSemester: "YEAR_SEMESTER_2025_1", label: "2025-1", current: false },
 ]
 
-function mapErrorMessage(errorName?: string): string {
-  switch (errorName) {
-    case "MEMBER_NOT_FOUND":
-      return "회원을 찾을 수 없습니다."
-    case "INVALID_ENUM":
-      return "학기 또는 필터 값이 올바르지 않습니다."
-    case "BAD_REQUEST":
-      return "요청 값이 올바르지 않습니다."
-    default:
-      return "요청 처리에 실패했습니다."
-  }
+const memberManagementErrorOverrides: Record<string, string> = {
+  INVALID_ENUM: "학기 또는 필터 값이 올바르지 않습니다.",
+}
+
+const resolveMemberManagementErrorMessage = (errorName?: string): string => {
+  return resolveAdminErrorMessage(errorName, { overrides: memberManagementErrorOverrides })
 }
 
 function formatDateTime(value: string | null): string {
@@ -130,7 +126,7 @@ const MemberManagementPage: React.FC = () => {
 
     const response = await getMemberRecordSemesters()
     if (!response.ok || !response.data) {
-      showError(mapErrorMessage(response.errorName))
+      showError(resolveMemberManagementErrorMessage(response.errorName))
       const sortedFallback = sortSemestersDesc(FALLBACK_SEMESTER_OPTIONS)
       setSemesterOptions(sortedFallback)
       setSelectedYearSemester(sortedFallback[0]?.yearSemester ?? "")
@@ -153,14 +149,14 @@ const MemberManagementPage: React.FC = () => {
     ])
 
     if (!timelineResponse.ok || !timelineResponse.data) {
-      showError(mapErrorMessage(timelineResponse.errorName))
+      showError(resolveMemberManagementErrorMessage(timelineResponse.errorName))
       setTimelineItems([])
     } else {
       setTimelineItems(timelineResponse.data)
     }
 
     if (!activityResponse.ok || !activityResponse.data) {
-      showError(mapErrorMessage(activityResponse.errorName))
+      showError(resolveMemberManagementErrorMessage(activityResponse.errorName))
       setActivityDetail(null)
     } else {
       setActivityDetail(activityResponse.data)
@@ -190,7 +186,7 @@ const MemberManagementPage: React.FC = () => {
       })
 
       if (!response.ok || !response.data) {
-        showError(mapErrorMessage(response.errorName))
+        showError(resolveMemberManagementErrorMessage(response.errorName))
         setRecordPage(null)
         setIsRecordLoading(false)
         return

@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import { resolveAdminErrorMessage } from "@/lib/errors/admin-error"
 import { showError, showSuccess } from "@/utils/alert"
 
 function toDateTimeLocalValue(value: string | null): string {
@@ -51,15 +52,12 @@ function formatDateTime(value: string | null): string {
   })
 }
 
-function mapErrorMessage(errorName?: string): string {
-  switch (errorName) {
-    case "INVALID_INPUT_VALUE":
-      return "입력값이 올바르지 않습니다."
-    case "INVALID_STUDY_ENROLL_WINDOW":
-      return "신청 시작 시각은 종료 시각보다 빨라야 합니다."
-    default:
-      return "요청 처리에 실패했습니다."
-  }
+const featureFlagsErrorOverrides: Record<string, string> = {
+  INVALID_STUDY_ENROLL_WINDOW: "신청 시작 시각은 종료 시각보다 빨라야 합니다.",
+}
+
+const resolveFeatureFlagsErrorMessage = (errorName?: string): string => {
+  return resolveAdminErrorMessage(errorName, { overrides: featureFlagsErrorOverrides })
 }
 
 const FeatureFlagsPage: React.FC = () => {
@@ -86,7 +84,7 @@ const FeatureFlagsPage: React.FC = () => {
     const response = await getFeatureFlags()
 
     if (!response.ok || !response.data) {
-      showError(mapErrorMessage(response.errorName))
+      showError(resolveFeatureFlagsErrorMessage(response.errorName))
       setIsDataLoading(false)
       return
     }
@@ -104,7 +102,7 @@ const FeatureFlagsPage: React.FC = () => {
     const response = await updateMemberSignupFlag(memberSignupEnabled)
 
     if (!response.ok || !response.data) {
-      showError(mapErrorMessage(response.errorName))
+      showError(resolveFeatureFlagsErrorMessage(response.errorName))
       setSavingKey(null)
       return
     }
@@ -119,7 +117,7 @@ const FeatureFlagsPage: React.FC = () => {
     const response = await updateStudyCreationFlag(studyCreationEnabled)
 
     if (!response.ok || !response.data) {
-      showError(mapErrorMessage(response.errorName))
+      showError(resolveFeatureFlagsErrorMessage(response.errorName))
       setSavingKey(null)
       return
     }
@@ -155,7 +153,7 @@ const FeatureFlagsPage: React.FC = () => {
     })
 
     if (!response.ok || !response.data) {
-      showError(mapErrorMessage(response.errorName))
+      showError(resolveFeatureFlagsErrorMessage(response.errorName))
       setSavingKey(null)
       return
     }

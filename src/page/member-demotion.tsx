@@ -5,15 +5,15 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { resolveAdminErrorMessage } from "@/lib/errors/admin-error"
 import { showConfirm, showError, showSuccess } from "@/utils/alert"
 
-function mapErrorMessage(errorName?: string): string {
-  switch (errorName) {
-    case "INVALID_INPUT_VALUE":
-      return "요청 값이 올바르지 않습니다."
-    default:
-      return "요청 처리에 실패했습니다."
-  }
+const memberDemotionErrorOverrides: Record<string, string> = {
+  INVALID_INPUT_VALUE: "요청 값이 올바르지 않습니다.",
+}
+
+const resolveMemberDemotionErrorMessage = (errorName?: string): string => {
+  return resolveAdminErrorMessage(errorName, { overrides: memberDemotionErrorOverrides })
 }
 
 const MemberDemotionPage: React.FC = () => {
@@ -39,7 +39,7 @@ const MemberDemotionPage: React.FC = () => {
     const response = await demoteMembersForCurrentSemester()
 
     if (!response.ok || !response.data) {
-      showError(mapErrorMessage(response.errorName))
+      showError(resolveMemberDemotionErrorMessage(response.errorName))
       setIsSubmitting(false)
       return
     }
