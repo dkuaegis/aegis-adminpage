@@ -2,9 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { QrCode, Search } from "lucide-react"
 
 import { deleteActivity } from "@/api/activity/delete-acitivites"
-import { GetActivities, type Activity } from "@/api/activity/get-activities"
+import { GetActivities } from "@/api/activity/get-activities"
 import { PostMemberActivities as createActivity } from "@/api/activity/post-activities"
 import { getActivityById, updateActivity } from "@/api/activity/put-activities"
+import type { Activity } from "@/api/activity/types"
 import QRScannerComponent from "@/components/QRScanner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -26,6 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { resolveAdminErrorMessage } from "@/lib/errors/admin-error"
 import { showError, showSuccess, showWarning } from "@/utils/alert"
 
 interface EventRow {
@@ -49,8 +51,14 @@ const Event: React.FC = () => {
 
   const loadActivities = useCallback(async () => {
     setIsLoading(true)
-    const data = await GetActivities()
-    setActivities(data)
+    const response = await GetActivities()
+    if (!response.ok || !response.data) {
+      setActivities([])
+      showError(resolveAdminErrorMessage(response.errorName, { fallback: "활동 목록을 불러올 수 없습니다." }))
+      setIsLoading(false)
+      return
+    }
+    setActivities(response.data)
     setIsLoading(false)
   }, [])
 
@@ -116,15 +124,15 @@ const Event: React.FC = () => {
       return
     }
 
-    const activity = await getActivityById(activityId)
-    if (!activity) {
-      showError("활동 정보를 불러올 수 없습니다.")
+    const response = await getActivityById(activityId)
+    if (!response.ok || !response.data) {
+      showError(resolveAdminErrorMessage(response.errorName, { fallback: "활동 정보를 불러올 수 없습니다." }))
       return
     }
 
     setEditingActivityId(activityId)
-    setEventName(activity.name)
-    setPointAmount(String(activity.pointAmount))
+    setEventName(response.data.name)
+    setPointAmount(String(response.data.pointAmount))
     setShowEditDialog(true)
   }
 
@@ -134,9 +142,9 @@ const Event: React.FC = () => {
       return
     }
 
-    const success = await deleteActivity(activityId)
-    if (!success) {
-      showError("삭제에 실패했습니다.")
+    const response = await deleteActivity(activityId)
+    if (!response.ok) {
+      showError(resolveAdminErrorMessage(response.errorName, { fallback: "삭제에 실패했습니다." }))
       return
     }
 
@@ -159,17 +167,17 @@ const Event: React.FC = () => {
     }
 
     if (editingActivityId) {
-      const success = await updateActivity(editingActivityId, eventName.trim(), pointValue)
-      if (!success) {
-        showError("행사 수정에 실패했습니다.")
+      const response = await updateActivity(editingActivityId, eventName.trim(), pointValue)
+      if (!response.ok) {
+        showError(resolveAdminErrorMessage(response.errorName, { fallback: "행사 수정에 실패했습니다." }))
         return
       }
 
       showSuccess("행사가 수정되었습니다.")
     } else {
-      const success = await createActivity(eventName.trim(), pointValue)
-      if (!success) {
-        showError("행사 생성에 실패했습니다.")
+      const response = await createActivity(eventName.trim(), pointValue)
+      if (!response.ok) {
+        showError(resolveAdminErrorMessage(response.errorName, { fallback: "행사 생성에 실패했습니다." }))
         return
       }
 

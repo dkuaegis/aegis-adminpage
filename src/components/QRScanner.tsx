@@ -5,6 +5,7 @@ import { GetQRCode } from "@/api/activity/get-qrcode"
 import { PostMemberActivities } from "@/api/activity/post-memebr-activities"
 import { Button } from "@/components/ui/button"
 import { useSessionKeepAlive } from "@/hooks/useSessionKeepAlive"
+import { resolveAdminErrorMessage } from "@/lib/errors/admin-error"
 import { showError, showSuccess } from "@/utils/alert"
 
 interface QRScannerProps {
@@ -60,14 +61,36 @@ const QRScannerComponent: React.FC<QRScannerProps> = ({ onClose }) => {
         }
 
         const qrResult = await GetQRCode(uuid)
-        if (!qrResult.success || !qrResult.data) {
-          showError("QR 코드를 새로고침 후 다시 시도하세요.")
+        if (!qrResult.ok || !qrResult.data) {
+          showError(
+            resolveAdminErrorMessage(qrResult.errorName, {
+              fallback: "QR 코드를 새로고침 후 다시 시도하세요.",
+            }),
+          )
           resetProcessingState(0)
           return
         }
 
-        const success = await PostMemberActivities(Number(storedActivityId), qrResult.data.memberId)
-        if (!success) {
+        const submitResponse = await PostMemberActivities(Number(storedActivityId), qrResult.data.memberId)
+        if (!submitResponse.ok) {
+          switch (submitResponse.status) {
+            case 400:
+              showError("잘못된 요청입니다. 관리자에게 문의해주세요.")
+              break
+            case 404:
+              showError("해당 활동 또는 회원을 찾을 수 없습니다. 관리자에게 문의해주세요.")
+              break
+            case 409:
+              showError("이미 참여한 활동입니다.")
+              break
+            default:
+              showError(
+                resolveAdminErrorMessage(submitResponse.errorName, {
+                  fallback: "요청 처리 중 오류가 발생했습니다. 관리자에게 문의해주세요.",
+                }),
+              )
+              break
+          }
           resetProcessingState(0)
           return
         }
