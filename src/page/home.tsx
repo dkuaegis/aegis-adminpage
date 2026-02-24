@@ -13,15 +13,7 @@ const Home: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">관리자 대시보드</CardTitle>
-          <CardDescription>운영 기능은 그대로 유지하고, 화면은 shadcn 기반으로 재구성되었습니다.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary">React 19</Badge>
-            <Badge variant="secondary">React Router 7</Badge>
-            <Badge variant="secondary">shadcn/ui</Badge>
-          </div>
-        </CardContent>
       </Card>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
