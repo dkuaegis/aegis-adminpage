@@ -12,14 +12,6 @@ export const showSuccess = (message: string) => {
   })
 }
 
-export const showWarning = async (message: string): Promise<boolean> => {
-  return window.confirm(message)
-}
-
 export const showConfirm = async (message: string): Promise<boolean> => {
-  return window.confirm(message)
-}
-
-export const showCustomConfirm = async (message: string): Promise<boolean> => {
   return window.confirm(message)
 }

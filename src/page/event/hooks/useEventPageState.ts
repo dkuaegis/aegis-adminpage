@@ -6,7 +6,7 @@ import { PostMemberActivities as createActivity } from "@/api/activity/post-acti
 import { getActivityById, updateActivity } from "@/api/activity/put-activities"
 import type { Activity } from "@/api/activity/types"
 import { resolveAdminErrorMessage } from "@/lib/errors/admin-error"
-import { showError, showSuccess, showWarning } from "@/utils/alert"
+import { showConfirm, showError, showSuccess } from "@/utils/alert"
 
 export interface EventRow {
   id: number
@@ -147,7 +147,7 @@ export const useEventPageState = (): UseEventPageStateResult => {
 
   const handleDelete = useCallback(
     async (activityId: number) => {
-      const confirmed = await showWarning("정말로 이 활동을 삭제하시겠습니까?")
+      const confirmed = await showConfirm("정말로 이 활동을 삭제하시겠습니까?")
       if (!confirmed) {
         return
       }

@@ -18,7 +18,7 @@ import type {
   AdminMemberSummary,
 } from "@/api/coupon/types"
 import { resolveAdminErrorMessage } from "@/lib/errors/admin-error"
-import { showError, showSuccess, showWarning } from "@/utils/alert"
+import { showConfirm, showError, showSuccess } from "@/utils/alert"
 
 export type CouponTab = "coupon" | "code" | "issued"
 
@@ -307,7 +307,7 @@ export const useCouponPageState = (): CouponPageState => {
   }
 
   const handleDeleteCoupon = async (couponId: number): Promise<void> => {
-    const confirmed = await showWarning("쿠폰을 삭제하시겠습니까?")
+    const confirmed = await showConfirm("쿠폰을 삭제하시겠습니까?")
     if (!confirmed) {
       return
     }
@@ -341,7 +341,7 @@ export const useCouponPageState = (): CouponPageState => {
   }
 
   const handleDeleteCouponCode = async (codeCouponId: number): Promise<void> => {
-    const confirmed = await showWarning("쿠폰 코드를 삭제하시겠습니까?")
+    const confirmed = await showConfirm("쿠폰 코드를 삭제하시겠습니까?")
     if (!confirmed) {
       return
     }
@@ -379,7 +379,7 @@ export const useCouponPageState = (): CouponPageState => {
   }
 
   const handleDeleteIssuedCoupon = async (issuedCouponId: number): Promise<void> => {
-    const confirmed = await showWarning("발급된 쿠폰을 삭제하시겠습니까?")
+    const confirmed = await showConfirm("발급된 쿠폰을 삭제하시겠습니까?")
     if (!confirmed) {
       return
     }

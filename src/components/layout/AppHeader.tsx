@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom"
 import AegisLogo from "@/assets/logos/aegis.svg"
 import { logout } from "@/api/auth/logout"
 import { Button } from "@/components/ui/button"
-import { showCustomConfirm, showError, showSuccess } from "@/utils/alert"
+import { showConfirm, showError, showSuccess } from "@/utils/alert"
 
 interface AppHeaderProps {
   onOpenMobileSidebar: () => void
@@ -14,7 +14,7 @@ export default function AppHeader({ onOpenMobileSidebar }: AppHeaderProps) {
   const navigate = useNavigate()
 
   const handleLogout = async () => {
-    const confirmed = await showCustomConfirm("로그아웃 하시겠습니까?")
+    const confirmed = await showConfirm("로그아웃 하시겠습니까?")
     if (!confirmed) {
       return
     }

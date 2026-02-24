@@ -17,8 +17,8 @@ const Login: React.FC = () => {
       <Card className="w-full max-w-lg shadow-xl">
         <CardHeader className="items-center text-center">
           <img className="mb-2 size-16" src={AegisLogo} alt="Aegis Logo" />
-          <CardTitle className="text-3xl font-extrabold tracking-tight">Welcome Aegis Admin</CardTitle>
-          <CardDescription>Aegis 관리자만 접근 가능합니다.</CardDescription>
+          <CardTitle className="text-3xl font-extrabold tracking-tight">Aegis 관리자 로그인</CardTitle>
+          <CardDescription>Aegis 관리자 계정만 접근할 수 있습니다.</CardDescription>
         </CardHeader>
 
         <CardContent>

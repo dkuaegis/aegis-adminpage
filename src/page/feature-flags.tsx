@@ -5,9 +5,10 @@ import { updateMemberSignupFlag } from "@/api/feature-flag/put-member-signup"
 import { updateStudyCreationFlag } from "@/api/feature-flag/put-study-creation"
 import { updateStudyEnrollWindowFlag } from "@/api/feature-flag/put-study-enroll-window"
 import type { AdminFeatureFlags } from "@/api/feature-flag/types"
+import { AdminFilterBar, AdminPageHeader, AdminSectionCard } from "@/components/admin"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -165,17 +166,15 @@ const FeatureFlagsPage: React.FC = () => {
 
   return (
     <div className="space-y-5">
-      <Card>
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
-          <div>
-            <CardTitle className="text-2xl">피처 플래그 관리</CardTitle>
-            <CardDescription>회원가입/스터디 개설/스터디 신청 기간 운영 플래그를 관리합니다.</CardDescription>
-          </div>
+      <AdminPageHeader
+        title="피처 플래그 관리"
+        description="회원가입/스터디 개설/스터디 신청 기간 운영 플래그를 관리합니다."
+        actions={
           <Button variant="outline" onClick={() => void loadFlags()} disabled={isDataLoading}>
             {isDataLoading ? "새로고침 중..." : "새로고침"}
           </Button>
-        </CardHeader>
-      </Card>
+        }
+      />
 
       {!flags && isDataLoading && (
         <Card>
@@ -187,77 +186,72 @@ const FeatureFlagsPage: React.FC = () => {
         </Card>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>회원가입 허용</CardTitle>
-          <CardDescription>회원가입 API 호출 허용 여부를 제어합니다.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <Select
-              value={memberSignupEnabled ? "true" : "false"}
-              onValueChange={(value) => setMemberSignupEnabled(value === "true")}
-            >
-              <SelectTrigger className="w-44">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="true">허용</SelectItem>
-                <SelectItem value="false">차단</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button onClick={() => void handleSaveMemberSignup()} disabled={savingKey !== null}>
-              {savingKey === "member-signup" ? "저장 중..." : "저장"}
-            </Button>
-          </div>
+      <AdminSectionCard
+        title="회원가입 허용"
+        description="회원가입 API 호출 허용 여부를 제어합니다."
+        contentClassName="space-y-4"
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <Select
+            value={memberSignupEnabled ? "true" : "false"}
+            onValueChange={(value) => setMemberSignupEnabled(value === "true")}
+          >
+            <SelectTrigger className="w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="true">허용</SelectItem>
+              <SelectItem value="false">차단</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={() => void handleSaveMemberSignup()} disabled={savingKey !== null}>
+            {savingKey === "member-signup" ? "저장 중..." : "저장"}
+          </Button>
+        </div>
 
-          <div className="flex flex-wrap gap-2 text-sm">
-            <Badge variant="secondary">현재: {flags?.memberSignup.signupAllowed ? "허용" : "차단"}</Badge>
-            <Badge variant="outline">유효성: {flags?.memberSignup.valid ? "정상" : "비정상"}</Badge>
-            <Badge variant="outline">원시값: {flags?.memberSignup.rawValue ?? "-"}</Badge>
-          </div>
-        </CardContent>
-      </Card>
+        <div className="flex flex-wrap gap-2 text-sm">
+          <Badge variant="secondary">현재: {flags?.memberSignup.signupAllowed ? "허용" : "차단"}</Badge>
+          <Badge variant="outline">유효성: {flags?.memberSignup.valid ? "정상" : "비정상"}</Badge>
+          <Badge variant="outline">원시값: {flags?.memberSignup.rawValue ?? "-"}</Badge>
+        </div>
+      </AdminSectionCard>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>스터디 개설 허용</CardTitle>
-          <CardDescription>스터디 개설 API 호출 허용 여부를 제어합니다.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <Select
-              value={studyCreationEnabled ? "true" : "false"}
-              onValueChange={(value) => setStudyCreationEnabled(value === "true")}
-            >
-              <SelectTrigger className="w-44">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="true">허용</SelectItem>
-                <SelectItem value="false">차단</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button onClick={() => void handleSaveStudyCreation()} disabled={savingKey !== null}>
-              {savingKey === "study-creation" ? "저장 중..." : "저장"}
-            </Button>
-          </div>
+      <AdminSectionCard
+        title="스터디 개설 허용"
+        description="스터디 개설 API 호출 허용 여부를 제어합니다."
+        contentClassName="space-y-4"
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <Select
+            value={studyCreationEnabled ? "true" : "false"}
+            onValueChange={(value) => setStudyCreationEnabled(value === "true")}
+          >
+            <SelectTrigger className="w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="true">허용</SelectItem>
+              <SelectItem value="false">차단</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={() => void handleSaveStudyCreation()} disabled={savingKey !== null}>
+            {savingKey === "study-creation" ? "저장 중..." : "저장"}
+          </Button>
+        </div>
 
-          <div className="flex flex-wrap gap-2 text-sm">
-            <Badge variant="secondary">현재: {flags?.studyCreation.studyCreationAllowed ? "허용" : "차단"}</Badge>
-            <Badge variant="outline">유효성: {flags?.studyCreation.valid ? "정상" : "비정상"}</Badge>
-            <Badge variant="outline">원시값: {flags?.studyCreation.rawValue ?? "-"}</Badge>
-          </div>
-        </CardContent>
-      </Card>
+        <div className="flex flex-wrap gap-2 text-sm">
+          <Badge variant="secondary">현재: {flags?.studyCreation.studyCreationAllowed ? "허용" : "차단"}</Badge>
+          <Badge variant="outline">유효성: {flags?.studyCreation.valid ? "정상" : "비정상"}</Badge>
+          <Badge variant="outline">원시값: {flags?.studyCreation.rawValue ?? "-"}</Badge>
+        </div>
+      </AdminSectionCard>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>스터디 신청 기간</CardTitle>
-          <CardDescription>스터디 신청 가능 시작/종료 시각을 지정합니다.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+      <AdminSectionCard
+        title="스터디 신청 기간"
+        description="스터디 신청 가능 시작/종료 시각을 지정합니다."
+        contentClassName="space-y-4"
+      >
+        <AdminFilterBar className="md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="open-time">신청 시작</Label>
               <Input
@@ -276,20 +270,19 @@ const FeatureFlagsPage: React.FC = () => {
                 onChange={(event) => setEnrollCloseAt(event.target.value)}
               />
             </div>
-          </div>
+        </AdminFilterBar>
 
-          <Button onClick={() => void handleSaveStudyEnrollWindow()} disabled={savingKey !== null}>
-            {savingKey === "study-enroll-window" ? "저장 중..." : "저장"}
-          </Button>
+        <Button onClick={() => void handleSaveStudyEnrollWindow()} disabled={savingKey !== null}>
+          {savingKey === "study-enroll-window" ? "저장 중..." : "저장"}
+        </Button>
 
-          <div className="grid gap-2 text-sm">
-            <div>현재 적용 시작 시각: {formatDateTime(flags?.studyEnrollWindow.openAt ?? null)}</div>
-            <div>현재 적용 종료 시각: {formatDateTime(flags?.studyEnrollWindow.closeAt ?? null)}</div>
-            <div>현재 신청 가능 여부: {flags?.studyEnrollWindow.enrollmentAllowedNow ? "가능" : "불가"}</div>
-            <div>기간 유효성: {flags?.studyEnrollWindow.valid ? "정상" : "비정상(기본 허용 적용)"}</div>
-          </div>
-        </CardContent>
-      </Card>
+        <div className="grid gap-2 text-sm">
+          <div>현재 적용 시작 시각: {formatDateTime(flags?.studyEnrollWindow.openAt ?? null)}</div>
+          <div>현재 적용 종료 시각: {formatDateTime(flags?.studyEnrollWindow.closeAt ?? null)}</div>
+          <div>현재 신청 가능 여부: {flags?.studyEnrollWindow.enrollmentAllowedNow ? "가능" : "불가"}</div>
+          <div>기간 유효성: {flags?.studyEnrollWindow.valid ? "정상" : "비정상(기본 허용 적용)"}</div>
+        </div>
+      </AdminSectionCard>
     </div>
   )
 }
