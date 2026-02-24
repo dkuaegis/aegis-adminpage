@@ -36,23 +36,25 @@ const MemberDemotionPage: React.FC = () => {
     }
 
     setIsSubmitting(true)
-    const response = await demoteMembersForCurrentSemester()
+    try {
+      const response = await demoteMembersForCurrentSemester()
 
-    if (!response.ok || !response.data) {
-      showError(resolveMemberDemotionErrorMessage(response.errorName))
+      if (!response.ok || !response.data) {
+        showError(resolveMemberDemotionErrorMessage(response.errorName))
+        return
+      }
+
+      const demotedIds = response.data.demotedMemberStudentIds ?? []
+      setLastDemotedStudentIds(demotedIds)
+
+      if (demotedIds.length === 0) {
+        showSuccess("강등 대상 회원이 없습니다.")
+      } else {
+        showSuccess(`${demotedIds.length}명의 회원을 강등했습니다.`)
+      }
+    } finally {
       setIsSubmitting(false)
-      return
     }
-
-    const demotedIds = response.data.demotedMemberStudentIds ?? []
-    setLastDemotedStudentIds(demotedIds)
-
-    if (demotedIds.length === 0) {
-      showSuccess("강등 대상 회원이 없습니다.")
-    } else {
-      showSuccess(`${demotedIds.length}명의 회원을 강등했습니다.`)
-    }
-    setIsSubmitting(false)
   }
 
   return (
