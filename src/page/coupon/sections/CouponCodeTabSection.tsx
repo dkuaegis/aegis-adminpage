@@ -1,26 +1,18 @@
-import { useMemo, useState } from "react"
+import { useMemo } from "react"
 
-import type { AdminCoupon, AdminCouponCode } from "@/api/coupon/types"
-import { AdminSortableTableHead } from "@/components/admin"
+import type { ColumnDef, PaginationState, SortingState, Updater } from "@tanstack/react-table"
+
+import type {
+  AdminCoupon,
+  AdminCouponCode,
+  AdminCouponCodePageResponse,
+} from "@/api/coupon/types"
+import { AdminDataTable } from "@/components/admin"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface CouponCodeTabSectionProps {
   coupons: AdminCoupon[]
@@ -29,9 +21,14 @@ interface CouponCodeTabSectionProps {
   newCouponCodeDescription: string
   onNewCouponCodeDescriptionChange: (description: string) => void
   onCreateCouponCode: () => Promise<void>
-  filteredCouponCodes: AdminCouponCode[]
+  couponCodePage: AdminCouponCodePageResponse | null
   onDeleteCouponCode: (codeCouponId: number) => Promise<void>
   formatDateTime: (value: string | null) => string
+  sorting: SortingState
+  onSortingChange: (updater: Updater<SortingState>) => void
+  pagination: PaginationState
+  onPaginationChange: (updater: Updater<PaginationState>) => void
+  isLoading: boolean
 }
 
 export const CouponCodeTabSection: React.FC<CouponCodeTabSectionProps> = ({
@@ -41,34 +38,80 @@ export const CouponCodeTabSection: React.FC<CouponCodeTabSectionProps> = ({
   newCouponCodeDescription,
   onNewCouponCodeDescriptionChange,
   onCreateCouponCode,
-  filteredCouponCodes,
+  couponCodePage,
   onDeleteCouponCode,
   formatDateTime,
+  sorting,
+  onSortingChange,
+  pagination,
+  onPaginationChange,
+  isLoading,
 }) => {
-  const [sort, setSort] = useState<
-    "id,asc" | "id,desc" | "couponId,asc" | "couponId,desc" | "code,asc" | "code,desc" | "usedAt,asc" | "usedAt,desc"
-  >("id,asc")
-
-  const sortedCouponCodes = useMemo(() => {
-    const [sortKey, direction] = sort.split(",") as ["id" | "couponId" | "code" | "usedAt", "asc" | "desc"]
-    const sorted = [...filteredCouponCodes].sort((left, right) => {
-      if (sortKey === "id") {
-        return left.codeCouponId - right.codeCouponId
-      }
-      if (sortKey === "couponId") {
-        return left.couponId - right.couponId
-      }
-      if (sortKey === "code") {
-        return left.code.localeCompare(right.code, "ko")
-      }
-
-      const leftValue = left.usedAt ? new Date(left.usedAt).getTime() : Number.POSITIVE_INFINITY
-      const rightValue = right.usedAt ? new Date(right.usedAt).getTime() : Number.POSITIVE_INFINITY
-      return leftValue - rightValue
-    })
-
-    return direction === "asc" ? sorted : sorted.reverse()
-  }, [filteredCouponCodes, sort])
+  const columns = useMemo<ColumnDef<AdminCouponCode>[]>(() => {
+    return [
+      {
+        id: "id",
+        accessorKey: "codeCouponId",
+        header: "코드 ID",
+        enableSorting: true,
+      },
+      {
+        id: "couponId",
+        accessorKey: "couponId",
+        header: "쿠폰 ID",
+        enableSorting: true,
+      },
+      {
+        id: "code",
+        accessorKey: "code",
+        header: "코드",
+        enableSorting: true,
+        cell: ({ row }) => <div className="max-w-[200px] truncate">{row.original.code}</div>,
+      },
+      {
+        id: "description",
+        accessorKey: "description",
+        header: "설명",
+        cell: ({ row }) => (
+          <div className="max-w-[260px] truncate" title={row.original.description ?? ""}>
+            {row.original.description ?? "-"}
+          </div>
+        ),
+      },
+      {
+        id: "status",
+        header: "상태",
+        cell: ({ row }) =>
+          row.original.isValid ? "사용 가능" : `사용 완료 (${row.original.couponName})`,
+      },
+      {
+        id: "usedAt",
+        accessorKey: "usedAt",
+        header: "사용 시각",
+        enableSorting: true,
+        sortDescFirst: true,
+        cell: ({ row }) => formatDateTime(row.original.usedAt),
+      },
+      {
+        id: "delete",
+        header: "삭제",
+        meta: {
+          headerClassName: "text-right",
+          cellClassName: "text-right",
+        },
+        cell: ({ row }) => (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => void onDeleteCouponCode(row.original.codeCouponId)}
+            disabled={!row.original.isValid}
+          >
+            삭제
+          </Button>
+        ),
+      },
+    ]
+  }, [formatDateTime, onDeleteCouponCode])
 
   return (
     <>
@@ -107,56 +150,20 @@ export const CouponCodeTabSection: React.FC<CouponCodeTabSectionProps> = ({
 
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <AdminSortableTableHead title="코드 ID" sortKey="id" sort={sort} onSortChange={(nextSort) => setSort(nextSort as typeof sort)} />
-                  <AdminSortableTableHead
-                    title="쿠폰 ID"
-                    sortKey="couponId"
-                    sort={sort}
-                    onSortChange={(nextSort) => setSort(nextSort as typeof sort)}
-                  />
-                  <AdminSortableTableHead title="코드" sortKey="code" sort={sort} onSortChange={(nextSort) => setSort(nextSort as typeof sort)} />
-                  <TableHead>설명</TableHead>
-                  <TableHead>상태</TableHead>
-                  <AdminSortableTableHead
-                    title="사용 시각"
-                    sortKey="usedAt"
-                    sort={sort}
-                    onSortChange={(nextSort) => setSort(nextSort as typeof sort)}
-                    defaultDirection="desc"
-                  />
-                  <TableHead className="text-right">삭제</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedCouponCodes.map((couponCode) => (
-                  <TableRow key={couponCode.codeCouponId}>
-                    <TableCell>{couponCode.codeCouponId}</TableCell>
-                    <TableCell>{couponCode.couponId}</TableCell>
-                    <TableCell className="max-w-[200px] truncate">{couponCode.code}</TableCell>
-                    <TableCell className="max-w-[260px] truncate" title={couponCode.description ?? ""}>
-                      {couponCode.description ?? "-"}
-                    </TableCell>
-                    <TableCell>{couponCode.isValid ? "사용 가능" : `사용 완료 (${couponCode.couponName})`}</TableCell>
-                    <TableCell>{formatDateTime(couponCode.usedAt)}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => void onDeleteCouponCode(couponCode.codeCouponId)}
-                        disabled={!couponCode.isValid}
-                      >
-                        삭제
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <AdminDataTable
+            columns={columns}
+            data={couponCodePage?.content ?? []}
+            sorting={sorting}
+            onSortingChange={onSortingChange}
+            pagination={pagination}
+            onPaginationChange={onPaginationChange}
+            pageCount={couponCodePage?.totalPages ?? 1}
+            totalElements={couponCodePage?.totalElements ?? 0}
+            isLoading={isLoading}
+            loadingMessage="쿠폰 코드 목록을 불러오는 중..."
+            emptyMessage="조회 결과가 없습니다."
+            getRowId={(row) => String(row.codeCouponId)}
+          />
         </CardContent>
       </Card>
     </>

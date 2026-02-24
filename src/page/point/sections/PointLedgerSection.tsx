@@ -1,50 +1,100 @@
-import type { AdminPointLedgerPage } from "@/api/point/types"
-import { AdminSortableTableHead } from "@/components/admin"
+import { useMemo } from "react"
+
+import type { ColumnDef, PaginationState, SortingState, Updater } from "@tanstack/react-table"
+
+import type { AdminPointLedgerItem, AdminPointLedgerPage } from "@/api/point/types"
+import { AdminDataTable } from "@/components/admin"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
-import type { PointLedgerSort, PointTransactionFilter } from "../hooks/usePointPageState"
+import type { PointTransactionFilter } from "../hooks/usePointPageState"
 
 type PointLedgerSectionProps = {
   isLedgerLoading: boolean
   ledgerData: AdminPointLedgerPage | null
-  ledgerPage: number
+  ledgerPagination: PaginationState
   ledgerMemberKeyword: string
   ledgerTransactionType: PointTransactionFilter
-  ledgerSort: PointLedgerSort
+  ledgerSorting: SortingState
   ledgerFrom: string
   ledgerTo: string
   onLedgerMemberKeywordChange: (value: string) => void
   onLedgerTransactionTypeChange: (value: PointTransactionFilter) => void
-  onLedgerSortChange: (value: PointLedgerSort) => Promise<void>
+  onLedgerSortingChange: (updater: Updater<SortingState>) => void
+  onLedgerPaginationChange: (updater: Updater<PaginationState>) => void
   onLedgerFromChange: (value: string) => void
   onLedgerToChange: (value: string) => void
   onLedgerSearch: () => Promise<void>
-  onMoveLedgerPage: (nextPage: number) => Promise<void>
   formatDateTime: (value: string) => string
 }
 
 export const PointLedgerSection: React.FC<PointLedgerSectionProps> = ({
   isLedgerLoading,
   ledgerData,
-  ledgerPage,
+  ledgerPagination,
   ledgerMemberKeyword,
   ledgerTransactionType,
-  ledgerSort,
+  ledgerSorting,
   ledgerFrom,
   ledgerTo,
   onLedgerMemberKeywordChange,
   onLedgerTransactionTypeChange,
-  onLedgerSortChange,
+  onLedgerSortingChange,
+  onLedgerPaginationChange,
   onLedgerFromChange,
   onLedgerToChange,
   onLedgerSearch,
-  onMoveLedgerPage,
   formatDateTime,
 }) => {
+  const columns = useMemo<ColumnDef<AdminPointLedgerItem>[]>(() => {
+    return [
+      {
+        id: "createdAt",
+        accessorKey: "createdAt",
+        header: "시간",
+        enableSorting: true,
+        sortDescFirst: true,
+        cell: ({ row }) => formatDateTime(row.original.createdAt),
+      },
+      {
+        id: "memberName",
+        accessorKey: "memberName",
+        header: "회원",
+        enableSorting: true,
+      },
+      {
+        id: "studentId",
+        accessorKey: "studentId",
+        header: "학번",
+        cell: ({ row }) => row.original.studentId ?? "-",
+      },
+      {
+        id: "transactionType",
+        accessorKey: "transactionType",
+        header: "유형",
+        enableSorting: true,
+        cell: ({ row }) => (row.original.transactionType === "EARN" ? "적립" : "차감"),
+      },
+      {
+        id: "amount",
+        accessorKey: "amount",
+        header: "금액",
+        enableSorting: true,
+        meta: {
+          headerClassName: "text-right",
+          cellClassName: "text-right",
+        },
+      },
+      {
+        id: "reason",
+        accessorKey: "reason",
+        header: "사유",
+      },
+    ]
+  }, [formatDateTime])
+
   return (
     <Card>
       <CardHeader>
@@ -79,85 +129,20 @@ export const PointLedgerSection: React.FC<PointLedgerSectionProps> = ({
           </Button>
         </div>
 
-        <div className="overflow-x-auto rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <AdminSortableTableHead
-                  title="시간"
-                  sortKey="createdAt"
-                  sort={ledgerSort}
-                  onSortChange={(nextSort) => void onLedgerSortChange(nextSort as PointLedgerSort)}
-                />
-                <AdminSortableTableHead
-                  title="회원"
-                  sortKey="memberName"
-                  sort={ledgerSort}
-                  onSortChange={(nextSort) => void onLedgerSortChange(nextSort as PointLedgerSort)}
-                />
-                <TableHead>학번</TableHead>
-                <AdminSortableTableHead
-                  title="유형"
-                  sortKey="transactionType"
-                  sort={ledgerSort}
-                  onSortChange={(nextSort) => void onLedgerSortChange(nextSort as PointLedgerSort)}
-                />
-                <AdminSortableTableHead
-                  title="금액"
-                  sortKey="amount"
-                  sort={ledgerSort}
-                  onSortChange={(nextSort) => void onLedgerSortChange(nextSort as PointLedgerSort)}
-                  className="text-right"
-                />
-                <TableHead>사유</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {ledgerData?.content.map((row) => (
-                <TableRow key={row.pointTransactionId}>
-                  <TableCell>{formatDateTime(row.createdAt)}</TableCell>
-                  <TableCell>{row.memberName}</TableCell>
-                  <TableCell>{row.studentId ?? "-"}</TableCell>
-                  <TableCell>{row.transactionType === "EARN" ? "적립" : "차감"}</TableCell>
-                  <TableCell className="text-right">{row.amount}</TableCell>
-                  <TableCell>{row.reason}</TableCell>
-                </TableRow>
-              ))}
-
-              {(ledgerData?.content.length ?? 0) === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-16 text-center text-muted-foreground">
-                    {isLedgerLoading ? "원장을 불러오는 중..." : "조회 결과가 없습니다."}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-          <span className="text-muted-foreground">
-            총 {ledgerData?.totalElements ?? 0}건 / {ledgerData ? ledgerData.page + 1 : 1}페이지
-          </span>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => void onMoveLedgerPage(ledgerPage - 1)}
-              disabled={isLedgerLoading || ledgerPage <= 0}
-            >
-              이전
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => void onMoveLedgerPage(ledgerPage + 1)}
-              disabled={isLedgerLoading || !(ledgerData?.hasNext ?? false)}
-            >
-              다음
-            </Button>
-          </div>
-        </div>
+        <AdminDataTable
+          columns={columns}
+          data={ledgerData?.content ?? []}
+          sorting={ledgerSorting}
+          onSortingChange={onLedgerSortingChange}
+          pagination={ledgerPagination}
+          onPaginationChange={onLedgerPaginationChange}
+          pageCount={ledgerData?.totalPages ?? 1}
+          totalElements={ledgerData?.totalElements ?? 0}
+          isLoading={isLedgerLoading}
+          loadingMessage="원장을 불러오는 중..."
+          emptyMessage="조회 결과가 없습니다."
+          getRowId={(row) => String(row.pointTransactionId)}
+        />
       </CardContent>
     </Card>
   )

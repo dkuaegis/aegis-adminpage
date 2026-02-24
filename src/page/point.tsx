@@ -14,19 +14,19 @@ const PointPage: React.FC = () => {
       <PointLedgerSection
         isLedgerLoading={state.isLedgerLoading}
         ledgerData={state.ledgerData}
-        ledgerPage={state.ledgerPage}
+        ledgerPagination={state.ledgerPagination}
         ledgerMemberKeyword={state.ledgerMemberKeyword}
         ledgerTransactionType={state.ledgerTransactionType}
-        ledgerSort={state.ledgerSort}
+        ledgerSorting={state.ledgerSorting}
         ledgerFrom={state.ledgerFrom}
         ledgerTo={state.ledgerTo}
         onLedgerMemberKeywordChange={state.setLedgerMemberKeyword}
         onLedgerTransactionTypeChange={state.setLedgerTransactionType}
-        onLedgerSortChange={state.setLedgerSort}
+        onLedgerSortingChange={state.onLedgerSortingChange}
+        onLedgerPaginationChange={state.onLedgerPaginationChange}
         onLedgerFromChange={state.setLedgerFrom}
         onLedgerToChange={state.setLedgerTo}
         onLedgerSearch={state.handleLedgerSearch}
-        onMoveLedgerPage={state.moveLedgerPage}
         formatDateTime={state.formatDateTime}
       />
 

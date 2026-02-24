@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from "react"
 
+import type { PaginationState, SortingState, Updater } from "@tanstack/react-table"
+import { functionalUpdate } from "@tanstack/react-table"
+
+import { createSortingState, normalizeSingleSorting, serializeSortingState } from "@/components/admin"
+import type { ColumnSortMap } from "@/components/admin"
 import { getPointLedger } from "@/api/point/get-point-ledger"
 import { getPointMember } from "@/api/point/get-point-member"
 import { postPointBatchGrant } from "@/api/point/post-point-batch-grant"
@@ -16,17 +21,18 @@ import { resolveAdminErrorMessage } from "@/lib/errors/admin-error"
 import { showConfirm, showError, showSuccess } from "@/utils/alert"
 
 export type PointTransactionFilter = "ALL" | PointTransactionType
-export type PointLedgerSort =
-  | "id,asc"
-  | "id,desc"
-  | "createdAt,asc"
-  | "createdAt,desc"
-  | "memberName,asc"
-  | "memberName,desc"
-  | "transactionType,asc"
-  | "transactionType,desc"
-  | "amount,asc"
-  | "amount,desc"
+
+const PAGE_SIZE = 50
+
+const LEDGER_SORT_MAP: ColumnSortMap = {
+  id: "id",
+  createdAt: "createdAt",
+  memberName: "memberName",
+  transactionType: "transactionType",
+  amount: "amount",
+}
+
+const DEFAULT_LEDGER_SORTING = createSortingState("id", true)
 
 const pointErrorOverrides: Record<string, string> = {
   POINT_ACCOUNT_NOT_FOUND: "포인트 계정을 찾을 수 없습니다.",
@@ -60,10 +66,13 @@ const createRequestId = (): string => {
 export const usePointPageState = () => {
   const [isLedgerLoading, setIsLedgerLoading] = useState(false)
   const [ledgerData, setLedgerData] = useState<AdminPointLedgerPage | null>(null)
-  const [ledgerPage, setLedgerPage] = useState(0)
+  const [ledgerPagination, setLedgerPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: PAGE_SIZE,
+  })
   const [ledgerMemberKeyword, setLedgerMemberKeyword] = useState("")
   const [ledgerTransactionType, setLedgerTransactionType] = useState<PointTransactionFilter>("ALL")
-  const [ledgerSort, setLedgerSort] = useState<PointLedgerSort>("id,desc")
+  const [ledgerSorting, setLedgerSorting] = useState<SortingState>(DEFAULT_LEDGER_SORTING)
   const [ledgerFrom, setLedgerFrom] = useState("")
   const [ledgerTo, setLedgerTo] = useState("")
 
@@ -88,31 +97,43 @@ export const usePointPageState = () => {
   const [batchResult, setBatchResult] = useState<AdminPointBatchGrantResult | null>(null)
 
   const fetchLedger = async (
-    page: number,
+    pagination: PaginationState,
     memberKeyword: string,
     transactionType: PointTransactionFilter,
-    sort: PointLedgerSort,
+    sorting: SortingState,
     from: string,
     to: string,
   ): Promise<void> => {
     setIsLedgerLoading(true)
+
     const response = await getPointLedger({
-      page,
-      size: 50,
+      page: pagination.pageIndex,
+      size: pagination.pageSize,
       memberKeyword,
       transactionType: transactionType === "ALL" ? undefined : transactionType,
-      sort,
+      sort: serializeSortingState(sorting, LEDGER_SORT_MAP, "id,desc"),
       from: from || undefined,
       to: to || undefined,
     })
 
-    if (!response.ok || !response.data) {
+    if (!response.ok) {
       showError(resolvePointErrorMessage(response.errorName))
       setIsLedgerLoading(false)
       return
     }
+    const data = response.data
+    if (!data) {
+      showError(resolvePointErrorMessage())
+      setIsLedgerLoading(false)
+      return
+    }
 
-    setLedgerData(response.data)
+    setLedgerData(data)
+    setLedgerPagination((prev) => ({
+      ...prev,
+      pageIndex: data.page,
+      pageSize: data.size,
+    }))
     setIsLedgerLoading(false)
   }
 
@@ -132,7 +153,14 @@ export const usePointPageState = () => {
   }
 
   useEffect(() => {
-    void fetchLedger(0, ledgerMemberKeyword, ledgerTransactionType, ledgerSort, ledgerFrom, ledgerTo)
+    void fetchLedger(
+      ledgerPagination,
+      ledgerMemberKeyword,
+      ledgerTransactionType,
+      ledgerSorting,
+      ledgerFrom,
+      ledgerTo,
+    )
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -149,22 +177,62 @@ export const usePointPageState = () => {
       showError("조회 시작일은 종료일보다 늦을 수 없습니다.")
       return
     }
-    setLedgerPage(0)
-    await fetchLedger(0, ledgerMemberKeyword, ledgerTransactionType, ledgerSort, ledgerFrom, ledgerTo)
+
+    const nextPagination = {
+      ...ledgerPagination,
+      pageIndex: 0,
+    }
+
+    setLedgerPagination(nextPagination)
+    await fetchLedger(
+      nextPagination,
+      ledgerMemberKeyword,
+      ledgerTransactionType,
+      ledgerSorting,
+      ledgerFrom,
+      ledgerTo,
+    )
   }
 
-  const moveLedgerPage = async (nextPage: number): Promise<void> => {
-    if (nextPage < 0) {
+  const handleLedgerSortingChange = (updater: Updater<SortingState>): void => {
+    const nextSorting = normalizeSingleSorting(updater, ledgerSorting, DEFAULT_LEDGER_SORTING)
+    const nextPagination = {
+      ...ledgerPagination,
+      pageIndex: 0,
+    }
+
+    setLedgerSorting(nextSorting)
+    setLedgerPagination(nextPagination)
+    void fetchLedger(
+      nextPagination,
+      ledgerMemberKeyword,
+      ledgerTransactionType,
+      nextSorting,
+      ledgerFrom,
+      ledgerTo,
+    )
+  }
+
+  const handleLedgerPaginationChange = (updater: Updater<PaginationState>): void => {
+    const nextPagination = functionalUpdate(updater, ledgerPagination)
+
+    if (nextPagination.pageIndex < 0) {
       return
     }
-    setLedgerPage(nextPage)
-    await fetchLedger(nextPage, ledgerMemberKeyword, ledgerTransactionType, ledgerSort, ledgerFrom, ledgerTo)
-  }
 
-  const changeLedgerSort = async (nextSort: PointLedgerSort): Promise<void> => {
-    setLedgerSort(nextSort)
-    setLedgerPage(0)
-    await fetchLedger(0, ledgerMemberKeyword, ledgerTransactionType, nextSort, ledgerFrom, ledgerTo)
+    if (ledgerData && nextPagination.pageIndex >= ledgerData.totalPages) {
+      return
+    }
+
+    setLedgerPagination(nextPagination)
+    void fetchLedger(
+      nextPagination,
+      ledgerMemberKeyword,
+      ledgerTransactionType,
+      ledgerSorting,
+      ledgerFrom,
+      ledgerTo,
+    )
   }
 
   const handleSearchMembers = async (): Promise<void> => {
@@ -240,7 +308,14 @@ export const usePointPageState = () => {
     }
 
     setSingleAmount("")
-    await fetchLedger(ledgerPage, ledgerMemberKeyword, ledgerTransactionType, ledgerSort, ledgerFrom, ledgerTo)
+    await fetchLedger(
+      ledgerPagination,
+      ledgerMemberKeyword,
+      ledgerTransactionType,
+      ledgerSorting,
+      ledgerFrom,
+      ledgerTo,
+    )
     if (selectedDetailMemberId !== null) {
       await fetchMemberPoint(selectedDetailMemberId)
     }
@@ -290,7 +365,14 @@ export const usePointPageState = () => {
     )
 
     setBatchAmount("")
-    await fetchLedger(ledgerPage, ledgerMemberKeyword, ledgerTransactionType, ledgerSort, ledgerFrom, ledgerTo)
+    await fetchLedger(
+      ledgerPagination,
+      ledgerMemberKeyword,
+      ledgerTransactionType,
+      ledgerSorting,
+      ledgerFrom,
+      ledgerTo,
+    )
     if (selectedDetailMemberId !== null) {
       await fetchMemberPoint(selectedDetailMemberId)
     }
@@ -302,19 +384,19 @@ export const usePointPageState = () => {
 
     isLedgerLoading,
     ledgerData,
-    ledgerPage,
+    ledgerPagination,
     ledgerMemberKeyword,
     setLedgerMemberKeyword,
     ledgerTransactionType,
     setLedgerTransactionType,
-    ledgerSort,
-    setLedgerSort: changeLedgerSort,
+    ledgerSorting,
+    onLedgerSortingChange: handleLedgerSortingChange,
+    onLedgerPaginationChange: handleLedgerPaginationChange,
     ledgerFrom,
     setLedgerFrom,
     ledgerTo,
     setLedgerTo,
     handleLedgerSearch,
-    moveLedgerPage,
 
     memberSearchKeyword,
     setMemberSearchKeyword,

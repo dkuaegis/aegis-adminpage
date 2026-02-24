@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from "react"
 
+import type { PaginationState, SortingState, Updater } from "@tanstack/react-table"
+import { functionalUpdate } from "@tanstack/react-table"
+
+import { createSortingState, normalizeSingleSorting, serializeSortingState } from "@/components/admin"
+import type { ColumnSortMap } from "@/components/admin"
 import { createCoupon } from "@/api/coupon/post-coupon"
 import { createCouponCode } from "@/api/coupon/post-coupon-code"
 import { createIssuedCoupons } from "@/api/coupon/post-issued-coupons"
@@ -13,14 +18,41 @@ import { getIssuedCoupons } from "@/api/coupon/get-issued-coupons"
 import { updateCouponName } from "@/api/coupon/patch-coupon-name"
 import type {
   AdminCoupon,
-  AdminCouponCode,
-  AdminIssuedCoupon,
+  AdminCouponCodePageResponse,
+  AdminCouponPageResponse,
+  AdminIssuedCouponPageResponse,
   AdminMemberSummary,
 } from "@/api/coupon/types"
 import { resolveAdminErrorMessage } from "@/lib/errors/admin-error"
 import { showConfirm, showError, showSuccess } from "@/utils/alert"
 
 export type CouponTab = "coupon" | "code" | "issued"
+
+const PAGE_SIZE = 50
+
+const COUPON_SORT_MAP: ColumnSortMap = {
+  id: "id",
+  name: "couponName",
+  discount: "discountAmount",
+}
+
+const COUPON_CODE_SORT_MAP: ColumnSortMap = {
+  id: "id",
+  couponId: "couponId",
+  code: "code",
+  usedAt: "usedAt",
+}
+
+const ISSUED_SORT_MAP: ColumnSortMap = {
+  id: "id",
+  coupon: "coupon",
+  member: "member",
+  usedAt: "usedAt",
+}
+
+const DEFAULT_COUPON_SORTING = createSortingState("id", false)
+const DEFAULT_COUPON_CODE_SORTING = createSortingState("id", false)
+const DEFAULT_ISSUED_SORTING = createSortingState("id", false)
 
 const couponErrorOverrides: Record<string, string> = {
   COUPON_ALREADY_EXISTS: "동일한 이름과 할인 금액을 가진 쿠폰이 이미 존재합니다.",
@@ -54,32 +86,53 @@ export interface CouponPageState {
   tab: CouponTab
   setTab: (nextTab: CouponTab) => void
   isDataLoading: boolean
-  searchText: string
-  setSearchText: (value: string) => void
+  searchDraft: string
+  setSearchDraft: (value: string) => void
+  appliedKeyword: string
+  handleApplySearch: () => void
+
   newCouponName: string
   setNewCouponName: (value: string) => void
   newDiscountAmount: string
   setNewDiscountAmount: (value: string) => void
   couponNameDrafts: Record<number, string>
   handleCouponNameDraftChange: (couponId: number, value: string) => void
+
   selectedCouponIdForCode: number
   setSelectedCouponIdForCode: (couponId: number) => void
   newCouponCodeDescription: string
   setNewCouponCodeDescription: (description: string) => void
+
   selectedCouponIdForIssue: number
   setSelectedCouponIdForIssue: (couponId: number) => void
   memberSearchText: string
   setMemberSearchText: (value: string) => void
   selectedMemberIdsForIssue: number[]
+
   coupons: AdminCoupon[]
-  filteredCoupons: AdminCoupon[]
-  filteredCouponCodes: AdminCouponCode[]
-  filteredIssuedCoupons: AdminIssuedCoupon[]
+  couponPage: AdminCouponPageResponse | null
+  couponCodePage: AdminCouponCodePageResponse | null
+  issuedCouponPage: AdminIssuedCouponPageResponse | null
+
+  couponSorting: SortingState
+  couponPagination: PaginationState
+  couponCodeSorting: SortingState
+  couponCodePagination: PaginationState
+  issuedSorting: SortingState
+  issuedPagination: PaginationState
+
+  handleCouponSortingChange: (updater: Updater<SortingState>) => void
+  handleCouponPaginationChange: (updater: Updater<PaginationState>) => void
+  handleCouponCodeSortingChange: (updater: Updater<SortingState>) => void
+  handleCouponCodePaginationChange: (updater: Updater<PaginationState>) => void
+  handleIssuedSortingChange: (updater: Updater<SortingState>) => void
+  handleIssuedPaginationChange: (updater: Updater<PaginationState>) => void
+
   filteredMembersForIssue: AdminMemberSummary[]
   selectedMemberIdSet: Set<number>
   isAllFilteredMembersSelected: boolean
   selectedAmongFilteredCount: number
-  currentRows: AdminCoupon[] | AdminCouponCode[] | AdminIssuedCoupon[]
+
   handleCreateCoupon: () => Promise<void>
   handleUpdateCouponName: (couponId: number) => Promise<void>
   handleDeleteCoupon: (couponId: number) => Promise<void>
@@ -95,72 +148,220 @@ export interface CouponPageState {
 
 export const useCouponPageState = (): CouponPageState => {
   const [tab, setTab] = useState<CouponTab>("coupon")
-  const [isDataLoading, setIsDataLoading] = useState(false)
+  const [searchDraft, setSearchDraft] = useState("")
+  const [appliedKeyword, setAppliedKeyword] = useState("")
+
+  const [isCouponLoading, setIsCouponLoading] = useState(false)
+  const [isCouponCodeLoading, setIsCouponCodeLoading] = useState(false)
+  const [isIssuedLoading, setIsIssuedLoading] = useState(false)
+
+  const [couponPage, setCouponPage] = useState<AdminCouponPageResponse | null>(null)
+  const [couponCodePage, setCouponCodePage] = useState<AdminCouponCodePageResponse | null>(null)
+  const [issuedCouponPage, setIssuedCouponPage] = useState<AdminIssuedCouponPageResponse | null>(null)
 
   const [coupons, setCoupons] = useState<AdminCoupon[]>([])
-  const [couponCodes, setCouponCodes] = useState<AdminCouponCode[]>([])
-  const [issuedCoupons, setIssuedCoupons] = useState<AdminIssuedCoupon[]>([])
-  const [members, setMembers] = useState<AdminMemberSummary[]>([])
+  const [couponNameDrafts, setCouponNameDrafts] = useState<Record<number, string>>({})
 
-  const [searchText, setSearchText] = useState("")
+  const [members, setMembers] = useState<AdminMemberSummary[]>([])
   const [memberSearchText, setMemberSearchText] = useState("")
+  const [selectedMemberIdsForIssue, setSelectedMemberIdsForIssue] = useState<number[]>([])
 
   const [newCouponName, setNewCouponName] = useState("")
   const [newDiscountAmount, setNewDiscountAmount] = useState("5000")
 
-  const [couponNameDrafts, setCouponNameDrafts] = useState<Record<number, string>>({})
-
   const [selectedCouponIdForCode, setSelectedCouponIdForCode] = useState<number>(0)
   const [newCouponCodeDescription, setNewCouponCodeDescription] = useState("")
   const [selectedCouponIdForIssue, setSelectedCouponIdForIssue] = useState<number>(0)
-  const [selectedMemberIdsForIssue, setSelectedMemberIdsForIssue] = useState<number[]>([])
 
-  const loadAll = async (): Promise<void> => {
-    setIsDataLoading(true)
-    const [couponsRes, codesRes, issuedRes, membersRes] = await Promise.all([
-      getCoupons(),
-      getCouponCodes(),
-      getIssuedCoupons(),
-      getAdminMembers(),
-    ])
+  const [couponSorting, setCouponSorting] = useState<SortingState>(DEFAULT_COUPON_SORTING)
+  const [couponPagination, setCouponPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: PAGE_SIZE,
+  })
 
-    if (couponsRes.ok && couponsRes.data) {
-      const orderedCoupons = [...couponsRes.data].sort((a, b) => a.couponId - b.couponId)
-      setCoupons(orderedCoupons)
-      setCouponNameDrafts((prevDrafts) => {
-        const nextDrafts: Record<number, string> = {}
-        orderedCoupons.forEach((coupon) => {
-          nextDrafts[coupon.couponId] = prevDrafts[coupon.couponId] ?? coupon.couponName
-        })
-        return nextDrafts
+  const [couponCodeSorting, setCouponCodeSorting] = useState<SortingState>(DEFAULT_COUPON_CODE_SORTING)
+  const [couponCodePagination, setCouponCodePagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: PAGE_SIZE,
+  })
+
+  const [issuedSorting, setIssuedSorting] = useState<SortingState>(DEFAULT_ISSUED_SORTING)
+  const [issuedPagination, setIssuedPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: PAGE_SIZE,
+  })
+
+  const isDataLoading = tab === "coupon" ? isCouponLoading : tab === "code" ? isCouponCodeLoading : isIssuedLoading
+
+  const fetchCouponOptions = async (): Promise<void> => {
+    const response = await getCoupons({
+      page: 0,
+      size: 100,
+      sort: "id,asc",
+    })
+
+    if (!response.ok) {
+      showError(resolveCouponErrorMessage(response.errorName))
+      return
+    }
+    const data = response.data
+    if (!data) {
+      showError(resolveCouponErrorMessage())
+      return
+    }
+
+    setCoupons(data.content)
+    setCouponNameDrafts((prevDrafts) => {
+      const nextDrafts: Record<number, string> = {}
+      data.content.forEach((coupon) => {
+        nextDrafts[coupon.couponId] = prevDrafts[coupon.couponId] ?? coupon.couponName
       })
-    } else {
-      showError(resolveCouponErrorMessage(couponsRes.errorName))
-    }
+      return nextDrafts
+    })
+  }
 
-    if (codesRes.ok && codesRes.data) {
-      setCouponCodes([...codesRes.data].sort((a, b) => a.codeCouponId - b.codeCouponId))
-    } else {
-      showError(resolveCouponErrorMessage(codesRes.errorName))
-    }
-
-    if (issuedRes.ok && issuedRes.data) {
-      setIssuedCoupons([...issuedRes.data].sort((a, b) => a.issuedCouponId - b.issuedCouponId))
-    } else {
-      showError(resolveCouponErrorMessage(issuedRes.errorName))
-    }
+  const fetchMembers = async (): Promise<void> => {
+    const membersRes = await getAdminMembers()
 
     if (membersRes.ok && membersRes.data) {
       setMembers([...membersRes.data].sort((a, b) => a.memberId - b.memberId))
-    } else {
-      showError("회원 목록을 가져오지 못했습니다.")
+      return
     }
 
-    setIsDataLoading(false)
+    showError("회원 목록을 가져오지 못했습니다.")
+  }
+
+  const fetchCouponPage = async (
+    pagination: PaginationState,
+    sorting: SortingState,
+    keyword: string,
+  ): Promise<void> => {
+    setIsCouponLoading(true)
+
+    const response = await getCoupons({
+      page: pagination.pageIndex,
+      size: pagination.pageSize,
+      sort: serializeSortingState(sorting, COUPON_SORT_MAP, "id,asc"),
+      keyword: keyword || undefined,
+    })
+
+    if (!response.ok) {
+      showError(resolveCouponErrorMessage(response.errorName))
+      setCouponPage(null)
+      setIsCouponLoading(false)
+      return
+    }
+    const data = response.data
+    if (!data) {
+      showError(resolveCouponErrorMessage())
+      setCouponPage(null)
+      setIsCouponLoading(false)
+      return
+    }
+
+    setCouponPage(data)
+    setCouponPagination((prev) => {
+      if (prev.pageIndex === data.page && prev.pageSize === data.size) {
+        return prev
+      }
+      return {
+        ...prev,
+        pageIndex: data.page,
+        pageSize: data.size,
+      }
+    })
+
+    setIsCouponLoading(false)
+  }
+
+  const fetchCouponCodePage = async (
+    pagination: PaginationState,
+    sorting: SortingState,
+    keyword: string,
+  ): Promise<void> => {
+    setIsCouponCodeLoading(true)
+
+    const response = await getCouponCodes({
+      page: pagination.pageIndex,
+      size: pagination.pageSize,
+      sort: serializeSortingState(sorting, COUPON_CODE_SORT_MAP, "id,asc"),
+      keyword: keyword || undefined,
+    })
+
+    if (!response.ok) {
+      showError(resolveCouponErrorMessage(response.errorName))
+      setCouponCodePage(null)
+      setIsCouponCodeLoading(false)
+      return
+    }
+    const data = response.data
+    if (!data) {
+      showError(resolveCouponErrorMessage())
+      setCouponCodePage(null)
+      setIsCouponCodeLoading(false)
+      return
+    }
+
+    setCouponCodePage(data)
+    setCouponCodePagination((prev) => {
+      if (prev.pageIndex === data.page && prev.pageSize === data.size) {
+        return prev
+      }
+      return {
+        ...prev,
+        pageIndex: data.page,
+        pageSize: data.size,
+      }
+    })
+
+    setIsCouponCodeLoading(false)
+  }
+
+  const fetchIssuedCouponPage = async (
+    pagination: PaginationState,
+    sorting: SortingState,
+    keyword: string,
+  ): Promise<void> => {
+    setIsIssuedLoading(true)
+
+    const response = await getIssuedCoupons({
+      page: pagination.pageIndex,
+      size: pagination.pageSize,
+      sort: serializeSortingState(sorting, ISSUED_SORT_MAP, "id,asc"),
+      keyword: keyword || undefined,
+    })
+
+    if (!response.ok) {
+      showError(resolveCouponErrorMessage(response.errorName))
+      setIssuedCouponPage(null)
+      setIsIssuedLoading(false)
+      return
+    }
+    const data = response.data
+    if (!data) {
+      showError(resolveCouponErrorMessage())
+      setIssuedCouponPage(null)
+      setIsIssuedLoading(false)
+      return
+    }
+
+    setIssuedCouponPage(data)
+    setIssuedPagination((prev) => {
+      if (prev.pageIndex === data.page && prev.pageSize === data.size) {
+        return prev
+      }
+      return {
+        ...prev,
+        pageIndex: data.page,
+        pageSize: data.size,
+      }
+    })
+
+    setIsIssuedLoading(false)
   }
 
   useEffect(() => {
-    void loadAll()
+    void Promise.all([fetchCouponOptions(), fetchMembers()])
   }, [])
 
   useEffect(() => {
@@ -179,59 +380,125 @@ export const useCouponPageState = (): CouponPageState => {
     }
   }, [coupons, selectedCouponIdForCode, selectedCouponIdForIssue])
 
-  const keyword = searchText.trim().toLowerCase()
-
-  const filteredCoupons = useMemo(() => {
-    if (!keyword) {
-      return coupons
+  useEffect(() => {
+    if (tab !== "coupon") {
+      return
     }
 
-    return coupons.filter((coupon) => {
-      return (
-        coupon.couponName.toLowerCase().includes(keyword) ||
-        String(coupon.couponId).includes(keyword) ||
-        String(coupon.discountAmount).includes(keyword)
-      )
-    })
-  }, [coupons, keyword])
+    void fetchCouponPage(couponPagination, couponSorting, appliedKeyword)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, couponPagination.pageIndex, couponPagination.pageSize, couponSorting, appliedKeyword])
 
-  const filteredCouponCodes = useMemo(() => {
-    if (!keyword) {
-      return couponCodes
+  useEffect(() => {
+    if (tab !== "code") {
+      return
     }
 
-    return couponCodes.filter((couponCode) => {
-      return (
-        couponCode.couponName.toLowerCase().includes(keyword) ||
-        couponCode.code.toLowerCase().includes(keyword) ||
-        (couponCode.description ?? "").toLowerCase().includes(keyword) ||
-        String(couponCode.codeCouponId).includes(keyword) ||
-        String(couponCode.couponId).includes(keyword)
-      )
-    })
-  }, [couponCodes, keyword])
+    void fetchCouponCodePage(couponCodePagination, couponCodeSorting, appliedKeyword)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, couponCodePagination.pageIndex, couponCodePagination.pageSize, couponCodeSorting, appliedKeyword])
 
-  const studentIdByMemberId = useMemo(() => {
-    return new Map(members.map((member) => [member.memberId, member.studentId?.toLowerCase() ?? ""]))
-  }, [members])
-
-  const filteredIssuedCoupons = useMemo(() => {
-    if (!keyword) {
-      return issuedCoupons
+  useEffect(() => {
+    if (tab !== "issued") {
+      return
     }
 
-    return issuedCoupons.filter((issuedCoupon) => {
-      const studentId = studentIdByMemberId.get(issuedCoupon.memberId) ?? ""
-      return (
-        issuedCoupon.couponName.toLowerCase().includes(keyword) ||
-        issuedCoupon.memberName.toLowerCase().includes(keyword) ||
-        issuedCoupon.memberEmail.toLowerCase().includes(keyword) ||
-        studentId.includes(keyword) ||
-        String(issuedCoupon.issuedCouponId).includes(keyword) ||
-        String(issuedCoupon.memberId).includes(keyword)
-      )
-    })
-  }, [issuedCoupons, keyword, studentIdByMemberId])
+    void fetchIssuedCouponPage(issuedPagination, issuedSorting, appliedKeyword)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, issuedPagination.pageIndex, issuedPagination.pageSize, issuedSorting, appliedKeyword])
+
+  const handleApplySearch = (): void => {
+    const nextKeyword = searchDraft.trim()
+
+    setAppliedKeyword(nextKeyword)
+
+    if (tab === "coupon") {
+      setCouponPagination((prev) => ({
+        ...prev,
+        pageIndex: 0,
+      }))
+      return
+    }
+
+    if (tab === "code") {
+      setCouponCodePagination((prev) => ({
+        ...prev,
+        pageIndex: 0,
+      }))
+      return
+    }
+
+    setIssuedPagination((prev) => ({
+      ...prev,
+      pageIndex: 0,
+    }))
+  }
+
+  const handleCouponSortingChange = (updater: Updater<SortingState>): void => {
+    setCouponSorting((prev) => normalizeSingleSorting(updater, prev, DEFAULT_COUPON_SORTING))
+    setCouponPagination((prev) => ({
+      ...prev,
+      pageIndex: 0,
+    }))
+  }
+
+  const handleCouponPaginationChange = (updater: Updater<PaginationState>): void => {
+    const nextPagination = functionalUpdate(updater, couponPagination)
+
+    if (nextPagination.pageIndex < 0) {
+      return
+    }
+
+    if (couponPage && nextPagination.pageIndex >= couponPage.totalPages) {
+      return
+    }
+
+    setCouponPagination(nextPagination)
+  }
+
+  const handleCouponCodeSortingChange = (updater: Updater<SortingState>): void => {
+    setCouponCodeSorting((prev) => normalizeSingleSorting(updater, prev, DEFAULT_COUPON_CODE_SORTING))
+    setCouponCodePagination((prev) => ({
+      ...prev,
+      pageIndex: 0,
+    }))
+  }
+
+  const handleCouponCodePaginationChange = (updater: Updater<PaginationState>): void => {
+    const nextPagination = functionalUpdate(updater, couponCodePagination)
+
+    if (nextPagination.pageIndex < 0) {
+      return
+    }
+
+    if (couponCodePage && nextPagination.pageIndex >= couponCodePage.totalPages) {
+      return
+    }
+
+    setCouponCodePagination(nextPagination)
+  }
+
+  const handleIssuedSortingChange = (updater: Updater<SortingState>): void => {
+    setIssuedSorting((prev) => normalizeSingleSorting(updater, prev, DEFAULT_ISSUED_SORTING))
+    setIssuedPagination((prev) => ({
+      ...prev,
+      pageIndex: 0,
+    }))
+  }
+
+  const handleIssuedPaginationChange = (updater: Updater<PaginationState>): void => {
+    const nextPagination = functionalUpdate(updater, issuedPagination)
+
+    if (nextPagination.pageIndex < 0) {
+      return
+    }
+
+    if (issuedCouponPage && nextPagination.pageIndex >= issuedCouponPage.totalPages) {
+      return
+    }
+
+    setIssuedPagination(nextPagination)
+  }
 
   const memberKeyword = memberSearchText.trim().toLowerCase()
 
@@ -286,7 +553,10 @@ export const useCouponPageState = (): CouponPageState => {
 
     showSuccess("쿠폰을 생성했습니다.")
     setNewCouponName("")
-    await loadAll()
+    await Promise.all([
+      fetchCouponOptions(),
+      fetchCouponPage(couponPagination, couponSorting, appliedKeyword),
+    ])
   }
 
   const handleUpdateCouponName = async (couponId: number): Promise<void> => {
@@ -303,7 +573,10 @@ export const useCouponPageState = (): CouponPageState => {
     }
 
     showSuccess("쿠폰 이름을 수정했습니다.")
-    await loadAll()
+    await Promise.all([
+      fetchCouponOptions(),
+      fetchCouponPage(couponPagination, couponSorting, appliedKeyword),
+    ])
   }
 
   const handleDeleteCoupon = async (couponId: number): Promise<void> => {
@@ -319,7 +592,10 @@ export const useCouponPageState = (): CouponPageState => {
     }
 
     showSuccess("쿠폰을 삭제했습니다.")
-    await loadAll()
+    await Promise.all([
+      fetchCouponOptions(),
+      fetchCouponPage(couponPagination, couponSorting, appliedKeyword),
+    ])
   }
 
   const handleCreateCouponCode = async (): Promise<void> => {
@@ -337,7 +613,7 @@ export const useCouponPageState = (): CouponPageState => {
 
     showSuccess("쿠폰 코드를 생성했습니다.")
     setNewCouponCodeDescription("")
-    await loadAll()
+    await fetchCouponCodePage(couponCodePagination, couponCodeSorting, appliedKeyword)
   }
 
   const handleDeleteCouponCode = async (codeCouponId: number): Promise<void> => {
@@ -353,7 +629,7 @@ export const useCouponPageState = (): CouponPageState => {
     }
 
     showSuccess("쿠폰 코드를 삭제했습니다.")
-    await loadAll()
+    await fetchCouponCodePage(couponCodePagination, couponCodeSorting, appliedKeyword)
   }
 
   const handleCreateIssuedCoupons = async (): Promise<void> => {
@@ -375,7 +651,7 @@ export const useCouponPageState = (): CouponPageState => {
 
     showSuccess(`${response.data?.length ?? 0}건의 쿠폰 발급을 완료했습니다.`)
     setSelectedMemberIdsForIssue([])
-    await loadAll()
+    await fetchIssuedCouponPage(issuedPagination, issuedSorting, appliedKeyword)
   }
 
   const handleDeleteIssuedCoupon = async (issuedCouponId: number): Promise<void> => {
@@ -391,7 +667,7 @@ export const useCouponPageState = (): CouponPageState => {
     }
 
     showSuccess("발급된 쿠폰을 삭제했습니다.")
-    await loadAll()
+    await fetchIssuedCouponPage(issuedPagination, issuedSorting, appliedKeyword)
   }
 
   const handleToggleMemberForIssue = (memberId: number): void => {
@@ -425,9 +701,6 @@ export const useCouponPageState = (): CouponPageState => {
     })
   }
 
-  const currentRows =
-    tab === "coupon" ? filteredCoupons : tab === "code" ? filteredCouponCodes : filteredIssuedCoupons
-
   const handleCouponNameDraftChange = (couponId: number, value: string): void => {
     setCouponNameDrafts((prev) => ({
       ...prev,
@@ -439,8 +712,10 @@ export const useCouponPageState = (): CouponPageState => {
     tab,
     setTab,
     isDataLoading,
-    searchText,
-    setSearchText,
+    searchDraft,
+    setSearchDraft,
+    appliedKeyword,
+    handleApplySearch,
     newCouponName,
     setNewCouponName,
     newDiscountAmount,
@@ -457,14 +732,25 @@ export const useCouponPageState = (): CouponPageState => {
     setMemberSearchText,
     selectedMemberIdsForIssue,
     coupons,
-    filteredCoupons,
-    filteredCouponCodes,
-    filteredIssuedCoupons,
+    couponPage,
+    couponCodePage,
+    issuedCouponPage,
+    couponSorting,
+    couponPagination,
+    couponCodeSorting,
+    couponCodePagination,
+    issuedSorting,
+    issuedPagination,
+    handleCouponSortingChange,
+    handleCouponPaginationChange,
+    handleCouponCodeSortingChange,
+    handleCouponCodePaginationChange,
+    handleIssuedSortingChange,
+    handleIssuedPaginationChange,
     filteredMembersForIssue,
     selectedMemberIdSet,
     isAllFilteredMembersSelected,
     selectedAmongFilteredCount,
-    currentRows,
     handleCreateCoupon,
     handleUpdateCouponName,
     handleDeleteCoupon,

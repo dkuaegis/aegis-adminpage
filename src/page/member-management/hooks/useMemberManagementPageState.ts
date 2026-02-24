@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from "react"
 
+import type { PaginationState, SortingState, Updater } from "@tanstack/react-table"
+import { functionalUpdate } from "@tanstack/react-table"
+
+import { createSortingState, normalizeSingleSorting, serializeSortingState } from "@/components/admin"
+import type { ColumnSortMap } from "@/components/admin"
 import { getMemberRecordSemesters } from "@/api/member-management/get-member-record-semesters"
 import { getMemberRecordTimeline } from "@/api/member-management/get-member-record-timeline"
 import { getMemberRecords } from "@/api/member-management/get-member-records"
@@ -16,7 +21,16 @@ import { resolveAdminErrorMessage } from "@/lib/errors/admin-error"
 import { showError } from "@/utils/alert"
 
 export type MemberRoleFilter = "ALL" | MemberRole
-export type SortFilter = "id,asc" | "id,desc" | "name,asc" | "name,desc"
+export type MemberSortPreset = "id,asc" | "id,desc" | "name,asc" | "name,desc"
+
+const PAGE_SIZE = 50
+
+const MEMBER_SORT_MAP: ColumnSortMap = {
+  id: "id",
+  name: "name",
+}
+
+const DEFAULT_MEMBER_SORTING = createSortingState("id", false)
 
 const FALLBACK_SEMESTER_OPTIONS: MemberRecordSemesterOption[] = [
   { yearSemester: "YEAR_SEMESTER_2026_1", label: "2026-1", current: true },
@@ -55,6 +69,33 @@ function sortSemestersDesc(options: MemberRecordSemesterOption[]): MemberRecordS
   })
 }
 
+function sortingToPreset(sorting: SortingState): MemberSortPreset {
+  const first = sorting[0]
+  if (!first) {
+    return "id,asc"
+  }
+
+  if (first.id === "name") {
+    return first.desc ? "name,desc" : "name,asc"
+  }
+
+  return first.desc ? "id,desc" : "id,asc"
+}
+
+function presetToSorting(preset: MemberSortPreset): SortingState {
+  switch (preset) {
+    case "id,desc":
+      return createSortingState("id", true)
+    case "name,asc":
+      return createSortingState("name", false)
+    case "name,desc":
+      return createSortingState("name", true)
+    case "id,asc":
+    default:
+      return createSortingState("id", false)
+  }
+}
+
 export function formatDateTime(value: string | null): string {
   if (!value) {
     return "-"
@@ -74,7 +115,9 @@ export interface MemberManagementPageState {
   selectedYearSemester: string
   keywordInput: string
   roleFilter: MemberRoleFilter
-  sortFilter: SortFilter
+  sortPreset: MemberSortPreset
+  sorting: SortingState
+  recordPagination: PaginationState
   recordPage: AdminMemberRecordPage | null
   isRecordLoading: boolean
   selectedMember: AdminMemberRecordItem | null
@@ -87,10 +130,11 @@ export interface MemberManagementPageState {
   handleSearch: () => void
   handleChangeSemester: (yearSemester: string) => void
   handleRoleFilterChange: (value: MemberRoleFilter) => void
-  handleSortFilterChange: (value: SortFilter) => void
+  handleSortPresetChange: (value: MemberSortPreset) => void
+  handleSortingChange: (updater: Updater<SortingState>) => void
+  handlePaginationChange: (updater: Updater<PaginationState>) => void
   handleSelectMember: (record: AdminMemberRecordItem) => void
   handleDetailSemesterChange: (yearSemester: string) => void
-  movePage: (nextPage: number) => void
 }
 
 export function useMemberManagementPageState(): MemberManagementPageState {
@@ -101,9 +145,12 @@ export function useMemberManagementPageState(): MemberManagementPageState {
   const [keywordInput, setKeywordInput] = useState("")
   const [appliedKeyword, setAppliedKeyword] = useState("")
   const [roleFilter, setRoleFilter] = useState<MemberRoleFilter>("ALL")
-  const [sortFilter, setSortFilter] = useState<SortFilter>("id,asc")
+  const [sorting, setSorting] = useState<SortingState>(DEFAULT_MEMBER_SORTING)
+  const [recordPagination, setRecordPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: PAGE_SIZE,
+  })
 
-  const [recordPageIndex, setRecordPageIndex] = useState(0)
   const [recordPage, setRecordPage] = useState<AdminMemberRecordPage | null>(null)
   const [isRecordLoading, setIsRecordLoading] = useState(false)
 
@@ -121,6 +168,8 @@ export function useMemberManagementPageState(): MemberManagementPageState {
     })
     return nextMap
   }, [semesterOptions])
+
+  const sortPreset = useMemo(() => sortingToPreset(sorting), [sorting])
 
   const resolveSemesterLabel = (yearSemester: string): string => {
     return semesterLabelMap.get(yearSemester) ?? yearSemester
@@ -181,23 +230,34 @@ export function useMemberManagementPageState(): MemberManagementPageState {
       try {
         const response = await getMemberRecords({
           yearSemester: selectedYearSemester,
-          page: recordPageIndex,
-          size: 50,
+          page: recordPagination.pageIndex,
+          size: recordPagination.pageSize,
           keyword: appliedKeyword || undefined,
           role: roleFilter === "ALL" ? undefined : roleFilter,
-          sort: sortFilter,
+          sort: serializeSortingState(sorting, MEMBER_SORT_MAP, "id,asc"),
         })
         if (stale) {
           return
         }
 
-        if (!response.ok || !response.data) {
+        if (!response.ok) {
           showError(resolveMemberManagementErrorMessage(response.errorName))
           setRecordPage(null)
           return
         }
+        const data = response.data
+        if (!data) {
+          showError(resolveMemberManagementErrorMessage())
+          setRecordPage(null)
+          return
+        }
 
-        setRecordPage(response.data)
+        setRecordPage(data)
+        setRecordPagination((prev) => ({
+          ...prev,
+          pageIndex: data.page,
+          pageSize: data.size,
+        }))
       } catch {
         if (stale) {
           return
@@ -215,7 +275,7 @@ export function useMemberManagementPageState(): MemberManagementPageState {
     return () => {
       stale = true
     }
-  }, [selectedYearSemester, recordPageIndex, appliedKeyword, roleFilter, sortFilter])
+  }, [selectedYearSemester, recordPagination.pageIndex, recordPagination.pageSize, appliedKeyword, roleFilter, sorting])
 
   useEffect(() => {
     if (!selectedYearSemester) {
@@ -280,13 +340,19 @@ export function useMemberManagementPageState(): MemberManagementPageState {
   }
 
   const handleSearch = (): void => {
-    setRecordPageIndex(0)
+    setRecordPagination((prev) => ({
+      ...prev,
+      pageIndex: 0,
+    }))
     setAppliedKeyword(keywordInput.trim())
   }
 
   const handleChangeSemester = (yearSemester: string): void => {
     setSelectedYearSemester(yearSemester)
-    setRecordPageIndex(0)
+    setRecordPagination((prev) => ({
+      ...prev,
+      pageIndex: 0,
+    }))
     setSelectedMember(null)
     setTimelineItems([])
     setActivityDetail(null)
@@ -294,12 +360,40 @@ export function useMemberManagementPageState(): MemberManagementPageState {
 
   const handleRoleFilterChange = (value: MemberRoleFilter): void => {
     setRoleFilter(value)
-    setRecordPageIndex(0)
+    setRecordPagination((prev) => ({
+      ...prev,
+      pageIndex: 0,
+    }))
   }
 
-  const handleSortFilterChange = (value: SortFilter): void => {
-    setSortFilter(value)
-    setRecordPageIndex(0)
+  const handleSortPresetChange = (value: MemberSortPreset): void => {
+    setSorting(presetToSorting(value))
+    setRecordPagination((prev) => ({
+      ...prev,
+      pageIndex: 0,
+    }))
+  }
+
+  const handleSortingChange = (updater: Updater<SortingState>): void => {
+    setSorting((prev) => normalizeSingleSorting(updater, prev, DEFAULT_MEMBER_SORTING))
+    setRecordPagination((prev) => ({
+      ...prev,
+      pageIndex: 0,
+    }))
+  }
+
+  const handlePaginationChange = (updater: Updater<PaginationState>): void => {
+    const nextPagination = functionalUpdate(updater, recordPagination)
+
+    if (nextPagination.pageIndex < 0) {
+      return
+    }
+
+    if (recordPage && nextPagination.pageIndex >= recordPage.totalPages) {
+      return
+    }
+
+    setRecordPagination(nextPagination)
   }
 
   const handleSelectMember = (record: AdminMemberRecordItem): void => {
@@ -311,23 +405,15 @@ export function useMemberManagementPageState(): MemberManagementPageState {
     setDetailYearSemester(yearSemester)
   }
 
-  const movePage = (nextPage: number): void => {
-    if (nextPage < 0) {
-      return
-    }
-    if (recordPage && nextPage >= recordPage.totalPages) {
-      return
-    }
-    setRecordPageIndex(nextPage)
-  }
-
   return {
     semesterOptions,
     isSemesterLoading,
     selectedYearSemester,
     keywordInput,
     roleFilter,
-    sortFilter,
+    sortPreset,
+    sorting,
+    recordPagination,
     recordPage,
     isRecordLoading,
     selectedMember,
@@ -340,9 +426,10 @@ export function useMemberManagementPageState(): MemberManagementPageState {
     handleSearch,
     handleChangeSemester,
     handleRoleFilterChange,
-    handleSortFilterChange,
+    handleSortPresetChange,
+    handleSortingChange,
+    handlePaginationChange,
     handleSelectMember,
     handleDetailSemesterChange,
-    movePage,
   }
 }

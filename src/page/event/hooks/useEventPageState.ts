@@ -1,12 +1,27 @@
 import { useCallback, useEffect, useMemo, useState, type Dispatch, type FormEvent, type SetStateAction } from "react"
 
+import type { PaginationState, SortingState, Updater } from "@tanstack/react-table"
+import { functionalUpdate } from "@tanstack/react-table"
+
+import { createSortingState, normalizeSingleSorting, serializeSortingState } from "@/components/admin"
+import type { ColumnSortMap } from "@/components/admin"
 import { deleteActivity } from "@/api/activity/delete-acitivites"
 import { GetActivities } from "@/api/activity/get-activities"
 import { createActivity } from "@/api/activity/post-activities"
 import { getActivityById, updateActivity } from "@/api/activity/put-activities"
-import type { Activity } from "@/api/activity/types"
+import type { Activity, AdminActivityPageResponse } from "@/api/activity/types"
 import { resolveAdminErrorMessage } from "@/lib/errors/admin-error"
 import { showConfirm, showError, showSuccess } from "@/utils/alert"
+
+const PAGE_SIZE = 50
+
+const EVENT_SORT_MAP: ColumnSortMap = {
+  id: "id",
+  name: "name",
+  pointAmount: "pointAmount",
+}
+
+const DEFAULT_EVENT_SORTING = createSortingState("id", false)
 
 export interface EventRow {
   id: number
@@ -16,9 +31,13 @@ export interface EventRow {
 
 interface UseEventPageStateResult {
   isLoading: boolean
-  searchText: string
-  isSortAsc: boolean
+  searchDraft: string
+  setSearchDraft: Dispatch<SetStateAction<string>>
+  appliedKeyword: string
+  sorting: SortingState
+  pagination: PaginationState
   rows: EventRow[]
+  pageData: AdminActivityPageResponse | null
   showEditDialog: boolean
   setShowEditDialog: Dispatch<SetStateAction<boolean>>
   editingActivityId: number | null
@@ -27,8 +46,9 @@ interface UseEventPageStateResult {
   pointAmount: string
   setPointAmount: Dispatch<SetStateAction<string>>
   qrActivityId: number | null
-  setSearchText: Dispatch<SetStateAction<string>>
-  toggleSortOrder: () => void
+  handleApplySearch: () => void
+  handleSortingChange: (updater: Updater<SortingState>) => void
+  handlePaginationChange: (updater: Updater<PaginationState>) => void
   handleCloseQR: () => void
   handleOpenQR: (eventId: number) => void
   handleOpenCreateDialog: () => void
@@ -38,10 +58,16 @@ interface UseEventPageStateResult {
 }
 
 export const useEventPageState = (): UseEventPageStateResult => {
-  const [activities, setActivities] = useState<Activity[]>([])
+  const [activityPage, setActivityPage] = useState<AdminActivityPageResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [searchText, setSearchText] = useState("")
-  const [isSortAsc, setIsSortAsc] = useState(true)
+
+  const [searchDraft, setSearchDraft] = useState("")
+  const [appliedKeyword, setAppliedKeyword] = useState("")
+  const [sorting, setSorting] = useState<SortingState>(DEFAULT_EVENT_SORTING)
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: PAGE_SIZE,
+  })
 
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [editingActivityId, setEditingActivityId] = useState<number | null>(null)
@@ -50,49 +76,92 @@ export const useEventPageState = (): UseEventPageStateResult => {
 
   const [qrActivityId, setQrActivityId] = useState<number | null>(null)
 
-  const loadActivities = useCallback(async () => {
-    setIsLoading(true)
-    const response = await GetActivities()
-    if (!response.ok || !response.data) {
-      setActivities([])
-      showError(resolveAdminErrorMessage(response.errorName, { fallback: "활동 목록을 불러올 수 없습니다." }))
-      setIsLoading(false)
-      return
-    }
+  const loadActivities = useCallback(
+    async (nextPagination: PaginationState, nextSorting: SortingState, keyword: string) => {
+      setIsLoading(true)
 
-    setActivities(response.data)
-    setIsLoading(false)
-  }, [])
+      const response = await GetActivities({
+        page: nextPagination.pageIndex,
+        size: nextPagination.pageSize,
+        sort: serializeSortingState(nextSorting, EVENT_SORT_MAP, "id,asc"),
+        keyword: keyword || undefined,
+      })
+      if (!response.ok) {
+        setActivityPage(null)
+        showError(resolveAdminErrorMessage(response.errorName, { fallback: "활동 목록을 불러올 수 없습니다." }))
+        setIsLoading(false)
+        return
+      }
+      const data = response.data
+      if (!data) {
+        setActivityPage(null)
+        showError(resolveAdminErrorMessage(undefined, { fallback: "활동 목록을 불러올 수 없습니다." }))
+        setIsLoading(false)
+        return
+      }
+
+      setActivityPage(data)
+      setPagination((prev) => {
+        if (prev.pageIndex === data.page && prev.pageSize === data.size) {
+          return prev
+        }
+
+        return {
+          ...prev,
+          pageIndex: data.page,
+          pageSize: data.size,
+        }
+      })
+      setIsLoading(false)
+    },
+    [],
+  )
 
   useEffect(() => {
-    void loadActivities()
-  }, [loadActivities])
+    void loadActivities(pagination, sorting, appliedKeyword)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagination.pageIndex, pagination.pageSize, sorting, appliedKeyword])
 
   const rows = useMemo<EventRow[]>(() => {
-    const keyword = searchText.trim().toLowerCase()
-
-    const mapped = activities.map((activity) => ({
+    return (activityPage?.content ?? []).map((activity: Activity) => ({
       id: activity.activityId,
       name: activity.name,
       amount: activity.pointAmount,
     }))
+  }, [activityPage])
 
-    const filtered = keyword
-      ? mapped.filter((row) => {
-          return (
-            row.name.toLowerCase().includes(keyword) ||
-            String(row.id).includes(keyword) ||
-            String(row.amount).includes(keyword)
-          )
-        })
-      : mapped
+  const handleApplySearch = useCallback(() => {
+    setAppliedKeyword(searchDraft.trim())
+    setPagination((prev) => ({
+      ...prev,
+      pageIndex: 0,
+    }))
+  }, [searchDraft])
 
-    return filtered.sort((a, b) => (isSortAsc ? a.id - b.id : b.id - a.id))
-  }, [activities, isSortAsc, searchText])
-
-  const toggleSortOrder = useCallback(() => {
-    setIsSortAsc((prev) => !prev)
+  const handleSortingChange = useCallback((updater: Updater<SortingState>) => {
+    setSorting((prev) => normalizeSingleSorting(updater, prev, DEFAULT_EVENT_SORTING))
+    setPagination((prev) => ({
+      ...prev,
+      pageIndex: 0,
+    }))
   }, [])
+
+  const handlePaginationChange = useCallback(
+    (updater: Updater<PaginationState>) => {
+      const nextPagination = functionalUpdate(updater, pagination)
+
+      if (nextPagination.pageIndex < 0) {
+        return
+      }
+
+      if (activityPage && nextPagination.pageIndex >= activityPage.totalPages) {
+        return
+      }
+
+      setPagination(nextPagination)
+    },
+    [activityPage, pagination],
+  )
 
   const handleCloseQR = useCallback(() => {
     const url = new URL(window.location.href)
@@ -157,9 +226,9 @@ export const useEventPageState = (): UseEventPageStateResult => {
       }
 
       showSuccess("활동이 삭제되었습니다.")
-      await loadActivities()
+      await loadActivities(pagination, sorting, appliedKeyword)
     },
-    [loadActivities],
+    [appliedKeyword, loadActivities, pagination, sorting],
   )
 
   const handleSubmitEvent = useCallback(
@@ -196,16 +265,20 @@ export const useEventPageState = (): UseEventPageStateResult => {
       }
 
       setShowEditDialog(false)
-      await loadActivities()
+      await loadActivities(pagination, sorting, appliedKeyword)
     },
-    [editingActivityId, eventName, loadActivities, pointAmount],
+    [appliedKeyword, editingActivityId, eventName, loadActivities, pagination, pointAmount, sorting],
   )
 
   return {
     isLoading,
-    searchText,
-    isSortAsc,
+    searchDraft,
+    setSearchDraft,
+    appliedKeyword,
+    sorting,
+    pagination,
     rows,
+    pageData: activityPage,
     showEditDialog,
     setShowEditDialog,
     editingActivityId,
@@ -214,8 +287,9 @@ export const useEventPageState = (): UseEventPageStateResult => {
     pointAmount,
     setPointAmount,
     qrActivityId,
-    setSearchText,
-    toggleSortOrder,
+    handleApplySearch,
+    handleSortingChange,
+    handlePaginationChange,
     handleCloseQR,
     handleOpenQR,
     handleOpenCreateDialog,
