@@ -243,7 +243,6 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
       transactionFrom,
       transactionTo,
     )
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handlePaymentSearch = async (): Promise<void> => {

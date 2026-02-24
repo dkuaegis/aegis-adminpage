@@ -386,7 +386,6 @@ export const useCouponPageState = (): CouponPageState => {
     }
 
     void fetchCouponPage(couponPagination, couponSorting, appliedKeyword)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, couponPagination.pageIndex, couponPagination.pageSize, couponSorting, appliedKeyword])
 
   useEffect(() => {
@@ -395,7 +394,6 @@ export const useCouponPageState = (): CouponPageState => {
     }
 
     void fetchCouponCodePage(couponCodePagination, couponCodeSorting, appliedKeyword)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, couponCodePagination.pageIndex, couponCodePagination.pageSize, couponCodeSorting, appliedKeyword])
 
   useEffect(() => {
@@ -404,7 +402,6 @@ export const useCouponPageState = (): CouponPageState => {
     }
 
     void fetchIssuedCouponPage(issuedPagination, issuedSorting, appliedKeyword)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, issuedPagination.pageIndex, issuedPagination.pageSize, issuedSorting, appliedKeyword])
 
   const handleApplySearch = (): void => {

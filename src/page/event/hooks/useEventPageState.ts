@@ -119,7 +119,6 @@ export const useEventPageState = (): UseEventPageStateResult => {
 
   useEffect(() => {
     void loadActivities(pagination, sorting, appliedKeyword)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination.pageIndex, pagination.pageSize, sorting, appliedKeyword])
 
   const rows = useMemo<EventRow[]>(() => {
