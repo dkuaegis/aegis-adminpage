@@ -109,22 +109,26 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
     memberKeyword: string,
   ): Promise<void> => {
     setIsPaymentsLoading(true)
-    const response = await getAdminPayments({
-      page,
-      size: 50,
-      yearSemester: yearSemester === "ALL" ? undefined : yearSemester,
-      status: status === "ALL" ? undefined : status,
-      memberKeyword,
-    })
+    try {
+      const response = await getAdminPayments({
+        page,
+        size: 50,
+        yearSemester: yearSemester === "ALL" ? undefined : yearSemester,
+        status: status === "ALL" ? undefined : status,
+        memberKeyword,
+      })
 
-    if (!response.ok || !response.data) {
-      showError(resolvePaymentErrorMessage(response.errorName))
+      if (!response.ok || !response.data) {
+        showError(resolvePaymentErrorMessage(response.errorName))
+        return
+      }
+
+      setPaymentData(response.data)
+    } catch {
+      showError(resolvePaymentErrorMessage())
+    } finally {
       setIsPaymentsLoading(false)
-      return
     }
-
-    setPaymentData(response.data)
-    setIsPaymentsLoading(false)
   }
 
   const fetchTransactions = async (
@@ -136,24 +140,28 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
     to: string,
   ): Promise<void> => {
     setIsTransactionsLoading(true)
-    const response = await getAdminTransactions({
-      page,
-      size: 50,
-      yearSemester: yearSemester === "ALL" ? undefined : yearSemester,
-      transactionType: type === "ALL" ? undefined : type,
-      depositorKeyword,
-      from: from || undefined,
-      to: to || undefined,
-    })
+    try {
+      const response = await getAdminTransactions({
+        page,
+        size: 50,
+        yearSemester: yearSemester === "ALL" ? undefined : yearSemester,
+        transactionType: type === "ALL" ? undefined : type,
+        depositorKeyword,
+        from: from || undefined,
+        to: to || undefined,
+      })
 
-    if (!response.ok || !response.data) {
-      showError(resolvePaymentErrorMessage(response.errorName))
+      if (!response.ok || !response.data) {
+        showError(resolvePaymentErrorMessage(response.errorName))
+        return
+      }
+
+      setTransactionData(response.data)
+    } catch {
+      showError(resolvePaymentErrorMessage())
+    } finally {
       setIsTransactionsLoading(false)
-      return
     }
-
-    setTransactionData(response.data)
-    setIsTransactionsLoading(false)
   }
 
   useEffect(() => {
@@ -196,26 +204,32 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
     }
 
     setForceCompletingPaymentId(paymentId)
-    const response = await patchForceCompletePayment(paymentId)
+    try {
+      const response = await patchForceCompletePayment(paymentId)
 
-    if (!response.ok || !response.data) {
-      showError(resolvePaymentErrorMessage(response.errorName))
+      if (!response.ok || !response.data) {
+        showError(resolvePaymentErrorMessage(response.errorName))
+        return
+      }
+
+      showSuccess(`결제 #${response.data.paymentId}를 완료 처리했습니다.`)
+
+      await Promise.all([
+        fetchPayments(paymentPage, paymentYearSemester, paymentStatus, paymentMemberKeyword),
+        fetchTransactions(
+          transactionPage,
+          transactionYearSemester,
+          transactionType,
+          transactionDepositorKeyword,
+          transactionFrom,
+          transactionTo,
+        ),
+      ])
+    } catch {
+      showError(resolvePaymentErrorMessage())
+    } finally {
       setForceCompletingPaymentId(null)
-      return
     }
-
-    showSuccess(`결제 #${response.data.paymentId}를 완료 처리했습니다.`)
-
-    await fetchPayments(paymentPage, paymentYearSemester, paymentStatus, paymentMemberKeyword)
-    await fetchTransactions(
-      transactionPage,
-      transactionYearSemester,
-      transactionType,
-      transactionDepositorKeyword,
-      transactionFrom,
-      transactionTo,
-    )
-    setForceCompletingPaymentId(null)
   }
 
   const handleTransactionSearch = async (): Promise<void> => {
