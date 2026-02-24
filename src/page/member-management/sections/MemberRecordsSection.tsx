@@ -1,4 +1,5 @@
 import type { AdminMemberRecordItem, AdminMemberRecordPage } from "@/api/member-management/types"
+import { AdminSortableTableHead } from "@/components/admin"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -98,8 +99,18 @@ export const MemberRecordsSection: React.FC<MemberRecordsSectionProps> = ({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>학번</TableHead>
-                <TableHead>이름</TableHead>
+                <AdminSortableTableHead
+                  title="학번"
+                  sortKey="id"
+                  sort={sortFilter}
+                  onSortChange={(value) => onSortFilterChange(value as SortFilter)}
+                />
+                <AdminSortableTableHead
+                  title="이름"
+                  sortKey="name"
+                  sort={sortFilter}
+                  onSortChange={(value) => onSortFilterChange(value as SortFilter)}
+                />
                 <TableHead>이메일</TableHead>
                 <TableHead>역할</TableHead>
                 <TableHead>학과</TableHead>

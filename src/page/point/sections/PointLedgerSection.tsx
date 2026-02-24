@@ -1,11 +1,12 @@
 import type { AdminPointLedgerPage } from "@/api/point/types"
+import { AdminSortableTableHead } from "@/components/admin"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
-import type { PointTransactionFilter } from "../hooks/usePointPageState"
+import type { PointLedgerSort, PointTransactionFilter } from "../hooks/usePointPageState"
 
 type PointLedgerSectionProps = {
   isLedgerLoading: boolean
@@ -13,10 +14,12 @@ type PointLedgerSectionProps = {
   ledgerPage: number
   ledgerMemberKeyword: string
   ledgerTransactionType: PointTransactionFilter
+  ledgerSort: PointLedgerSort
   ledgerFrom: string
   ledgerTo: string
   onLedgerMemberKeywordChange: (value: string) => void
   onLedgerTransactionTypeChange: (value: PointTransactionFilter) => void
+  onLedgerSortChange: (value: PointLedgerSort) => Promise<void>
   onLedgerFromChange: (value: string) => void
   onLedgerToChange: (value: string) => void
   onLedgerSearch: () => Promise<void>
@@ -30,10 +33,12 @@ export const PointLedgerSection: React.FC<PointLedgerSectionProps> = ({
   ledgerPage,
   ledgerMemberKeyword,
   ledgerTransactionType,
+  ledgerSort,
   ledgerFrom,
   ledgerTo,
   onLedgerMemberKeywordChange,
   onLedgerTransactionTypeChange,
+  onLedgerSortChange,
   onLedgerFromChange,
   onLedgerToChange,
   onLedgerSearch,
@@ -78,11 +83,32 @@ export const PointLedgerSection: React.FC<PointLedgerSectionProps> = ({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>시간</TableHead>
-                <TableHead>회원</TableHead>
+                <AdminSortableTableHead
+                  title="시간"
+                  sortKey="createdAt"
+                  sort={ledgerSort}
+                  onSortChange={(nextSort) => void onLedgerSortChange(nextSort as PointLedgerSort)}
+                />
+                <AdminSortableTableHead
+                  title="회원"
+                  sortKey="memberName"
+                  sort={ledgerSort}
+                  onSortChange={(nextSort) => void onLedgerSortChange(nextSort as PointLedgerSort)}
+                />
                 <TableHead>학번</TableHead>
-                <TableHead>유형</TableHead>
-                <TableHead>금액</TableHead>
+                <AdminSortableTableHead
+                  title="유형"
+                  sortKey="transactionType"
+                  sort={ledgerSort}
+                  onSortChange={(nextSort) => void onLedgerSortChange(nextSort as PointLedgerSort)}
+                />
+                <AdminSortableTableHead
+                  title="금액"
+                  sortKey="amount"
+                  sort={ledgerSort}
+                  onSortChange={(nextSort) => void onLedgerSortChange(nextSort as PointLedgerSort)}
+                  className="text-right"
+                />
                 <TableHead>사유</TableHead>
               </TableRow>
             </TableHeader>
@@ -93,7 +119,7 @@ export const PointLedgerSection: React.FC<PointLedgerSectionProps> = ({
                   <TableCell>{row.memberName}</TableCell>
                   <TableCell>{row.studentId ?? "-"}</TableCell>
                   <TableCell>{row.transactionType === "EARN" ? "적립" : "차감"}</TableCell>
-                  <TableCell>{row.amount}</TableCell>
+                  <TableCell className="text-right">{row.amount}</TableCell>
                   <TableCell>{row.reason}</TableCell>
                 </TableRow>
               ))}

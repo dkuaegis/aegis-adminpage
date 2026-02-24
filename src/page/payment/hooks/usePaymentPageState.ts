@@ -15,6 +15,28 @@ import { showConfirm, showError, showSuccess } from "@/utils/alert"
 export type YearSemesterFilter = "ALL" | string
 export type PaymentStatusFilter = "ALL" | PaymentStatus
 export type TransactionTypeFilter = "ALL" | TransactionType
+export type PaymentSort =
+  | "id,asc"
+  | "id,desc"
+  | "memberName,asc"
+  | "memberName,desc"
+  | "status,asc"
+  | "status,desc"
+  | "finalPrice,asc"
+  | "finalPrice,desc"
+  | "createdAt,asc"
+  | "createdAt,desc"
+export type TransactionSort =
+  | "id,asc"
+  | "id,desc"
+  | "transactionTime,asc"
+  | "transactionTime,desc"
+  | "depositorName,asc"
+  | "depositorName,desc"
+  | "amount,asc"
+  | "amount,desc"
+  | "balance,asc"
+  | "balance,desc"
 
 export interface YearSemesterOption {
   value: string
@@ -27,6 +49,7 @@ export interface PaymentSectionState {
   page: number
   yearSemester: YearSemesterFilter
   status: PaymentStatusFilter
+  sort: PaymentSort
   memberKeyword: string
   forceCompletingPaymentId: number | null
 }
@@ -35,6 +58,7 @@ export interface PaymentSectionActions {
   setYearSemester: (value: YearSemesterFilter) => void
   setStatus: (value: PaymentStatusFilter) => void
   setMemberKeyword: (value: string) => void
+  setSort: (value: PaymentSort) => Promise<void>
   search: () => Promise<void>
   movePage: (nextPage: number) => Promise<void>
   forceComplete: (paymentId: number) => Promise<void>
@@ -46,6 +70,7 @@ export interface TransactionSectionState {
   page: number
   yearSemester: YearSemesterFilter
   type: TransactionTypeFilter
+  sort: TransactionSort
   depositorKeyword: string
   from: string
   to: string
@@ -55,6 +80,7 @@ export interface TransactionSectionActions {
   setYearSemester: (value: YearSemesterFilter) => void
   setType: (value: TransactionTypeFilter) => void
   setDepositorKeyword: (value: string) => void
+  setSort: (value: TransactionSort) => Promise<void>
   setFrom: (value: string) => void
   setTo: (value: string) => void
   search: () => Promise<void>
@@ -90,6 +116,7 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
   const [paymentPage, setPaymentPage] = useState(0)
   const [paymentYearSemester, setPaymentYearSemester] = useState<YearSemesterFilter>("ALL")
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatusFilter>("ALL")
+  const [paymentSort, setPaymentSort] = useState<PaymentSort>("id,desc")
   const [paymentMemberKeyword, setPaymentMemberKeyword] = useState("")
   const [forceCompletingPaymentId, setForceCompletingPaymentId] = useState<number | null>(null)
 
@@ -98,6 +125,7 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
   const [transactionPage, setTransactionPage] = useState(0)
   const [transactionYearSemester, setTransactionYearSemester] = useState<YearSemesterFilter>("ALL")
   const [transactionType, setTransactionType] = useState<TransactionTypeFilter>("ALL")
+  const [transactionSort, setTransactionSort] = useState<TransactionSort>("transactionTime,desc")
   const [transactionDepositorKeyword, setTransactionDepositorKeyword] = useState("")
   const [transactionFrom, setTransactionFrom] = useState("")
   const [transactionTo, setTransactionTo] = useState("")
@@ -106,6 +134,7 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
     page: number,
     yearSemester: YearSemesterFilter,
     status: PaymentStatusFilter,
+    sort: PaymentSort,
     memberKeyword: string,
   ): Promise<void> => {
     setIsPaymentsLoading(true)
@@ -115,6 +144,7 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
         size: 50,
         yearSemester: yearSemester === "ALL" ? undefined : yearSemester,
         status: status === "ALL" ? undefined : status,
+        sort,
         memberKeyword,
       })
 
@@ -135,6 +165,7 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
     page: number,
     yearSemester: YearSemesterFilter,
     type: TransactionTypeFilter,
+    sort: TransactionSort,
     depositorKeyword: string,
     from: string,
     to: string,
@@ -146,6 +177,7 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
         size: 50,
         yearSemester: yearSemester === "ALL" ? undefined : yearSemester,
         transactionType: type === "ALL" ? undefined : type,
+        sort,
         depositorKeyword,
         from: from || undefined,
         to: to || undefined,
@@ -165,11 +197,12 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
   }
 
   useEffect(() => {
-    void fetchPayments(0, paymentYearSemester, paymentStatus, paymentMemberKeyword)
+    void fetchPayments(0, paymentYearSemester, paymentStatus, paymentSort, paymentMemberKeyword)
     void fetchTransactions(
       0,
       transactionYearSemester,
       transactionType,
+      transactionSort,
       transactionDepositorKeyword,
       transactionFrom,
       transactionTo,
@@ -179,7 +212,7 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
 
   const handlePaymentSearch = async (): Promise<void> => {
     setPaymentPage(0)
-    await fetchPayments(0, paymentYearSemester, paymentStatus, paymentMemberKeyword)
+    await fetchPayments(0, paymentYearSemester, paymentStatus, paymentSort, paymentMemberKeyword)
   }
 
   const movePaymentPage = async (nextPage: number): Promise<void> => {
@@ -187,7 +220,13 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
       return
     }
     setPaymentPage(nextPage)
-    await fetchPayments(nextPage, paymentYearSemester, paymentStatus, paymentMemberKeyword)
+    await fetchPayments(nextPage, paymentYearSemester, paymentStatus, paymentSort, paymentMemberKeyword)
+  }
+
+  const changePaymentSort = async (nextSort: PaymentSort): Promise<void> => {
+    setPaymentSort(nextSort)
+    setPaymentPage(0)
+    await fetchPayments(0, paymentYearSemester, paymentStatus, nextSort, paymentMemberKeyword)
   }
 
   const handleForceComplete = async (paymentId: number): Promise<void> => {
@@ -215,11 +254,12 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
       showSuccess(`결제 #${response.data.paymentId}를 완료 처리했습니다.`)
 
       await Promise.all([
-        fetchPayments(paymentPage, paymentYearSemester, paymentStatus, paymentMemberKeyword),
+        fetchPayments(paymentPage, paymentYearSemester, paymentStatus, paymentSort, paymentMemberKeyword),
         fetchTransactions(
           transactionPage,
           transactionYearSemester,
           transactionType,
+          transactionSort,
           transactionDepositorKeyword,
           transactionFrom,
           transactionTo,
@@ -243,6 +283,7 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
       0,
       transactionYearSemester,
       transactionType,
+      transactionSort,
       transactionDepositorKeyword,
       transactionFrom,
       transactionTo,
@@ -258,6 +299,21 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
       nextPage,
       transactionYearSemester,
       transactionType,
+      transactionSort,
+      transactionDepositorKeyword,
+      transactionFrom,
+      transactionTo,
+    )
+  }
+
+  const changeTransactionSort = async (nextSort: TransactionSort): Promise<void> => {
+    setTransactionSort(nextSort)
+    setTransactionPage(0)
+    await fetchTransactions(
+      0,
+      transactionYearSemester,
+      transactionType,
+      nextSort,
       transactionDepositorKeyword,
       transactionFrom,
       transactionTo,
@@ -272,6 +328,7 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
       page: paymentPage,
       yearSemester: paymentYearSemester,
       status: paymentStatus,
+      sort: paymentSort,
       memberKeyword: paymentMemberKeyword,
       forceCompletingPaymentId,
     },
@@ -279,6 +336,7 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
       setYearSemester: (value) => setPaymentYearSemester(value),
       setStatus: (value) => setPaymentStatus(value),
       setMemberKeyword: (value) => setPaymentMemberKeyword(value),
+      setSort: changePaymentSort,
       search: handlePaymentSearch,
       movePage: movePaymentPage,
       forceComplete: handleForceComplete,
@@ -289,6 +347,7 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
       page: transactionPage,
       yearSemester: transactionYearSemester,
       type: transactionType,
+      sort: transactionSort,
       depositorKeyword: transactionDepositorKeyword,
       from: transactionFrom,
       to: transactionTo,
@@ -297,6 +356,7 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
       setYearSemester: (value) => setTransactionYearSemester(value),
       setType: (value) => setTransactionType(value),
       setDepositorKeyword: (value) => setTransactionDepositorKeyword(value),
+      setSort: changeTransactionSort,
       setFrom: (value) => setTransactionFrom(value),
       setTo: (value) => setTransactionTo(value),
       search: handleTransactionSearch,

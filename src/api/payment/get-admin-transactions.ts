@@ -9,6 +9,7 @@ export interface AdminTransactionsQuery {
   depositorKeyword?: string;
   from?: string;
   to?: string;
+  sort?: string;
 }
 
 export async function getAdminTransactions(query: AdminTransactionsQuery): Promise<ApiResult<AdminTransactionPage>> {
@@ -31,6 +32,9 @@ export async function getAdminTransactions(query: AdminTransactionsQuery): Promi
   }
   if (query.to) {
     params.set('to', query.to);
+  }
+  if (query.sort) {
+    params.set('sort', query.sort);
   }
 
   return requestApi<AdminTransactionPage>(`/admin/payments/transactions?${params.toString()}`, {

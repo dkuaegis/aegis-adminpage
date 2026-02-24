@@ -8,6 +8,7 @@ export interface PointLedgerQuery {
   transactionType?: PointTransactionType;
   from?: string;
   to?: string;
+  sort?: string;
 }
 
 export async function getPointLedger(query: PointLedgerQuery): Promise<ApiResult<AdminPointLedgerPage>> {
@@ -27,6 +28,9 @@ export async function getPointLedger(query: PointLedgerQuery): Promise<ApiResult
   }
   if (query.to) {
     params.set('to', query.to);
+  }
+  if (query.sort) {
+    params.set('sort', query.sort);
   }
 
   return requestApi<AdminPointLedgerPage>(`/admin/points/ledger?${params.toString()}`, {

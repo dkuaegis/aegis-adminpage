@@ -1,6 +1,7 @@
 import {
   AdminFilterBar,
   AdminSectionCard,
+  AdminSortableTableHead,
   AdminTableEmptyRow,
 } from "@/components/admin"
 import { Button } from "@/components/ui/button"
@@ -23,6 +24,7 @@ import {
 
 import type {
   TransactionSectionActions,
+  TransactionSort,
   TransactionSectionState,
   TransactionTypeFilter,
   YearSemesterOption,
@@ -96,13 +98,40 @@ export const TransactionManagementSection: React.FC<TransactionManagementSection
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>시간</TableHead>
-              <TableHead>ID</TableHead>
+              <AdminSortableTableHead
+                title="시간"
+                sortKey="transactionTime"
+                sort={state.sort}
+                onSortChange={(nextSort) => void actions.setSort(nextSort as TransactionSort)}
+              />
+              <AdminSortableTableHead
+                title="ID"
+                sortKey="id"
+                sort={state.sort}
+                onSortChange={(nextSort) => void actions.setSort(nextSort as TransactionSort)}
+              />
               <TableHead>학기</TableHead>
-              <TableHead>입금자</TableHead>
+              <AdminSortableTableHead
+                title="입금자"
+                sortKey="depositorName"
+                sort={state.sort}
+                onSortChange={(nextSort) => void actions.setSort(nextSort as TransactionSort)}
+              />
               <TableHead>유형</TableHead>
-              <TableHead>금액</TableHead>
-              <TableHead>잔액</TableHead>
+              <AdminSortableTableHead
+                title="금액"
+                sortKey="amount"
+                sort={state.sort}
+                onSortChange={(nextSort) => void actions.setSort(nextSort as TransactionSort)}
+                className="text-right"
+              />
+              <AdminSortableTableHead
+                title="잔액"
+                sortKey="balance"
+                sort={state.sort}
+                onSortChange={(nextSort) => void actions.setSort(nextSort as TransactionSort)}
+                className="text-right"
+              />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -113,8 +142,8 @@ export const TransactionManagementSection: React.FC<TransactionManagementSection
                 <TableCell>{transaction.yearSemester}</TableCell>
                 <TableCell>{transaction.depositorName}</TableCell>
                 <TableCell>{transaction.transactionType === "DEPOSIT" ? "입금" : "출금"}</TableCell>
-                <TableCell>{transaction.amount}</TableCell>
-                <TableCell>{transaction.balance}</TableCell>
+                <TableCell className="text-right">{transaction.amount}</TableCell>
+                <TableCell className="text-right">{transaction.balance}</TableCell>
               </TableRow>
             ))}
 

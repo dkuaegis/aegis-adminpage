@@ -7,6 +7,7 @@ export interface AdminPaymentsQuery {
   yearSemester?: string;
   status?: PaymentStatus;
   memberKeyword?: string;
+  sort?: string;
 }
 
 export async function getAdminPayments(query: AdminPaymentsQuery): Promise<ApiResult<AdminPaymentPage>> {
@@ -23,6 +24,9 @@ export async function getAdminPayments(query: AdminPaymentsQuery): Promise<ApiRe
   }
   if (query.memberKeyword && query.memberKeyword.trim().length > 0) {
     params.set('memberKeyword', query.memberKeyword.trim());
+  }
+  if (query.sort) {
+    params.set('sort', query.sort);
   }
 
   return requestApi<AdminPaymentPage>(`/admin/payments?${params.toString()}`, {

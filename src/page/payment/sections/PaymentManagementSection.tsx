@@ -1,6 +1,7 @@
 import {
   AdminFilterBar,
   AdminSectionCard,
+  AdminSortableTableHead,
   AdminTableEmptyRow,
 } from "@/components/admin"
 import { Button } from "@/components/ui/button"
@@ -23,6 +24,7 @@ import {
 
 import type {
   PaymentSectionActions,
+  PaymentSort,
   PaymentSectionState,
   PaymentStatusFilter,
   YearSemesterOption,
@@ -93,13 +95,39 @@ export const PaymentManagementSection: React.FC<PaymentManagementSectionProps> =
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>회원</TableHead>
+              <AdminSortableTableHead
+                title="ID"
+                sortKey="id"
+                sort={state.sort}
+                onSortChange={(nextSort) => void actions.setSort(nextSort as PaymentSort)}
+              />
+              <AdminSortableTableHead
+                title="회원"
+                sortKey="memberName"
+                sort={state.sort}
+                onSortChange={(nextSort) => void actions.setSort(nextSort as PaymentSort)}
+              />
               <TableHead>학번</TableHead>
               <TableHead>학기</TableHead>
-              <TableHead>상태</TableHead>
-              <TableHead>금액</TableHead>
-              <TableHead>생성일</TableHead>
+              <AdminSortableTableHead
+                title="상태"
+                sortKey="status"
+                sort={state.sort}
+                onSortChange={(nextSort) => void actions.setSort(nextSort as PaymentSort)}
+              />
+              <AdminSortableTableHead
+                title="금액"
+                sortKey="finalPrice"
+                sort={state.sort}
+                onSortChange={(nextSort) => void actions.setSort(nextSort as PaymentSort)}
+                className="text-right"
+              />
+              <AdminSortableTableHead
+                title="생성일"
+                sortKey="createdAt"
+                sort={state.sort}
+                onSortChange={(nextSort) => void actions.setSort(nextSort as PaymentSort)}
+              />
               <TableHead>동작</TableHead>
             </TableRow>
           </TableHeader>
@@ -111,7 +139,7 @@ export const PaymentManagementSection: React.FC<PaymentManagementSectionProps> =
                 <TableCell>{payment.studentId ?? "-"}</TableCell>
                 <TableCell>{payment.yearSemester}</TableCell>
                 <TableCell>{payment.status}</TableCell>
-                <TableCell>{payment.finalPrice}</TableCell>
+                <TableCell className="text-right">{payment.finalPrice}</TableCell>
                 <TableCell>{formatDateTime(payment.createdAt)}</TableCell>
                 <TableCell>
                   <Button

@@ -1,4 +1,7 @@
+import { useMemo, useState } from "react"
+
 import type { AdminCoupon } from "@/api/coupon/types"
+import { AdminSortableTableHead } from "@/components/admin"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -37,6 +40,25 @@ export const CouponTabSection: React.FC<CouponTabSectionProps> = ({
   onUpdateCouponName,
   onDeleteCoupon,
 }) => {
+  const [sort, setSort] = useState<"id,asc" | "id,desc" | "name,asc" | "name,desc" | "discount,asc" | "discount,desc">(
+    "id,asc",
+  )
+
+  const sortedCoupons = useMemo(() => {
+    const [sortKey, direction] = sort.split(",") as ["id" | "name" | "discount", "asc" | "desc"]
+    const sorted = [...filteredCoupons].sort((left, right) => {
+      if (sortKey === "id") {
+        return left.couponId - right.couponId
+      }
+      if (sortKey === "name") {
+        return left.couponName.localeCompare(right.couponName, "ko")
+      }
+      return Number(left.discountAmount) - Number(right.discountAmount)
+    })
+
+    return direction === "asc" ? sorted : sorted.reverse()
+  }, [filteredCoupons, sort])
+
   return (
     <>
       <Card>
@@ -64,48 +86,56 @@ export const CouponTabSection: React.FC<CouponTabSectionProps> = ({
 
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-24">ID</TableHead>
-                <TableHead>쿠폰 이름</TableHead>
-                <TableHead className="w-36 text-right">할인 금액</TableHead>
-                <TableHead className="w-[280px]">이름 수정</TableHead>
-                <TableHead className="w-28 text-right">삭제</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredCoupons.map((coupon) => (
-                <TableRow key={coupon.couponId}>
-                  <TableCell>{coupon.couponId}</TableCell>
-                  <TableCell>{coupon.couponName}</TableCell>
-                  <TableCell className="text-right">
-                    {Number(coupon.discountAmount).toLocaleString("ko-KR")}원
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Input
-                        value={couponNameDrafts[coupon.couponId] ?? coupon.couponName}
-                        onChange={(event) => onCouponNameDraftChange(coupon.couponId, event.target.value)}
-                      />
-                      <Button variant="outline" onClick={() => void onUpdateCouponName(coupon.couponId)}>
-                        저장
-                      </Button>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => void onDeleteCoupon(coupon.couponId)}
-                    >
-                      삭제
-                    </Button>
-                  </TableCell>
+          <div className="overflow-x-auto rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <AdminSortableTableHead title="ID" sortKey="id" sort={sort} onSortChange={(nextSort) => setSort(nextSort as typeof sort)} />
+                  <AdminSortableTableHead title="쿠폰 이름" sortKey="name" sort={sort} onSortChange={(nextSort) => setSort(nextSort as typeof sort)} />
+                  <AdminSortableTableHead
+                    title="할인 금액"
+                    sortKey="discount"
+                    sort={sort}
+                    onSortChange={(nextSort) => setSort(nextSort as typeof sort)}
+                    className="text-right"
+                  />
+                  <TableHead className="w-[280px]">이름 수정</TableHead>
+                  <TableHead className="w-28 text-right">삭제</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {sortedCoupons.map((coupon) => (
+                  <TableRow key={coupon.couponId}>
+                    <TableCell>{coupon.couponId}</TableCell>
+                    <TableCell>{coupon.couponName}</TableCell>
+                    <TableCell className="text-right">
+                      {Number(coupon.discountAmount).toLocaleString("ko-KR")}원
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Input
+                          value={couponNameDrafts[coupon.couponId] ?? coupon.couponName}
+                          onChange={(event) => onCouponNameDraftChange(coupon.couponId, event.target.value)}
+                        />
+                        <Button variant="outline" onClick={() => void onUpdateCouponName(coupon.couponId)}>
+                          저장
+                        </Button>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => void onDeleteCoupon(coupon.couponId)}
+                      >
+                        삭제
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </>

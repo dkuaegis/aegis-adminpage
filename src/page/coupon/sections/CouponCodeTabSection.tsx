@@ -1,4 +1,7 @@
+import { useMemo, useState } from "react"
+
 import type { AdminCoupon, AdminCouponCode } from "@/api/coupon/types"
+import { AdminSortableTableHead } from "@/components/admin"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -42,6 +45,31 @@ export const CouponCodeTabSection: React.FC<CouponCodeTabSectionProps> = ({
   onDeleteCouponCode,
   formatDateTime,
 }) => {
+  const [sort, setSort] = useState<
+    "id,asc" | "id,desc" | "couponId,asc" | "couponId,desc" | "code,asc" | "code,desc" | "usedAt,asc" | "usedAt,desc"
+  >("id,asc")
+
+  const sortedCouponCodes = useMemo(() => {
+    const [sortKey, direction] = sort.split(",") as ["id" | "couponId" | "code" | "usedAt", "asc" | "desc"]
+    const sorted = [...filteredCouponCodes].sort((left, right) => {
+      if (sortKey === "id") {
+        return left.codeCouponId - right.codeCouponId
+      }
+      if (sortKey === "couponId") {
+        return left.couponId - right.couponId
+      }
+      if (sortKey === "code") {
+        return left.code.localeCompare(right.code, "ko")
+      }
+
+      const leftValue = left.usedAt ? new Date(left.usedAt).getTime() : Number.POSITIVE_INFINITY
+      const rightValue = right.usedAt ? new Date(right.usedAt).getTime() : Number.POSITIVE_INFINITY
+      return leftValue - rightValue
+    })
+
+    return direction === "asc" ? sorted : sorted.reverse()
+  }, [filteredCouponCodes, sort])
+
   return (
     <>
       <Card>
@@ -79,43 +107,56 @@ export const CouponCodeTabSection: React.FC<CouponCodeTabSectionProps> = ({
 
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>코드 ID</TableHead>
-                <TableHead>쿠폰 ID</TableHead>
-                <TableHead>코드</TableHead>
-                <TableHead>설명</TableHead>
-                <TableHead>상태</TableHead>
-                <TableHead>사용 시각</TableHead>
-                <TableHead className="text-right">삭제</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredCouponCodes.map((couponCode) => (
-                <TableRow key={couponCode.codeCouponId}>
-                  <TableCell>{couponCode.codeCouponId}</TableCell>
-                  <TableCell>{couponCode.couponId}</TableCell>
-                  <TableCell className="max-w-[200px] truncate">{couponCode.code}</TableCell>
-                  <TableCell className="max-w-[260px] truncate" title={couponCode.description ?? ""}>
-                    {couponCode.description ?? "-"}
-                  </TableCell>
-                  <TableCell>{couponCode.isValid ? "사용 가능" : `사용 완료 (${couponCode.couponName})`}</TableCell>
-                  <TableCell>{formatDateTime(couponCode.usedAt)}</TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => void onDeleteCouponCode(couponCode.codeCouponId)}
-                      disabled={!couponCode.isValid}
-                    >
-                      삭제
-                    </Button>
-                  </TableCell>
+          <div className="overflow-x-auto rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <AdminSortableTableHead title="코드 ID" sortKey="id" sort={sort} onSortChange={(nextSort) => setSort(nextSort as typeof sort)} />
+                  <AdminSortableTableHead
+                    title="쿠폰 ID"
+                    sortKey="couponId"
+                    sort={sort}
+                    onSortChange={(nextSort) => setSort(nextSort as typeof sort)}
+                  />
+                  <AdminSortableTableHead title="코드" sortKey="code" sort={sort} onSortChange={(nextSort) => setSort(nextSort as typeof sort)} />
+                  <TableHead>설명</TableHead>
+                  <TableHead>상태</TableHead>
+                  <AdminSortableTableHead
+                    title="사용 시각"
+                    sortKey="usedAt"
+                    sort={sort}
+                    onSortChange={(nextSort) => setSort(nextSort as typeof sort)}
+                    defaultDirection="desc"
+                  />
+                  <TableHead className="text-right">삭제</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {sortedCouponCodes.map((couponCode) => (
+                  <TableRow key={couponCode.codeCouponId}>
+                    <TableCell>{couponCode.codeCouponId}</TableCell>
+                    <TableCell>{couponCode.couponId}</TableCell>
+                    <TableCell className="max-w-[200px] truncate">{couponCode.code}</TableCell>
+                    <TableCell className="max-w-[260px] truncate" title={couponCode.description ?? ""}>
+                      {couponCode.description ?? "-"}
+                    </TableCell>
+                    <TableCell>{couponCode.isValid ? "사용 가능" : `사용 완료 (${couponCode.couponName})`}</TableCell>
+                    <TableCell>{formatDateTime(couponCode.usedAt)}</TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => void onDeleteCouponCode(couponCode.codeCouponId)}
+                        disabled={!couponCode.isValid}
+                      >
+                        삭제
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </>

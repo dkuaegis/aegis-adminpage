@@ -17,10 +17,12 @@ const PointPage: React.FC = () => {
         ledgerPage={state.ledgerPage}
         ledgerMemberKeyword={state.ledgerMemberKeyword}
         ledgerTransactionType={state.ledgerTransactionType}
+        ledgerSort={state.ledgerSort}
         ledgerFrom={state.ledgerFrom}
         ledgerTo={state.ledgerTo}
         onLedgerMemberKeywordChange={state.setLedgerMemberKeyword}
         onLedgerTransactionTypeChange={state.setLedgerTransactionType}
+        onLedgerSortChange={state.setLedgerSort}
         onLedgerFromChange={state.setLedgerFrom}
         onLedgerToChange={state.setLedgerTo}
         onLedgerSearch={state.handleLedgerSearch}

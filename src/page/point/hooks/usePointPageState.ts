@@ -16,6 +16,17 @@ import { resolveAdminErrorMessage } from "@/lib/errors/admin-error"
 import { showConfirm, showError, showSuccess } from "@/utils/alert"
 
 export type PointTransactionFilter = "ALL" | PointTransactionType
+export type PointLedgerSort =
+  | "id,asc"
+  | "id,desc"
+  | "createdAt,asc"
+  | "createdAt,desc"
+  | "memberName,asc"
+  | "memberName,desc"
+  | "transactionType,asc"
+  | "transactionType,desc"
+  | "amount,asc"
+  | "amount,desc"
 
 const pointErrorOverrides: Record<string, string> = {
   POINT_ACCOUNT_NOT_FOUND: "포인트 계정을 찾을 수 없습니다.",
@@ -52,6 +63,7 @@ export const usePointPageState = () => {
   const [ledgerPage, setLedgerPage] = useState(0)
   const [ledgerMemberKeyword, setLedgerMemberKeyword] = useState("")
   const [ledgerTransactionType, setLedgerTransactionType] = useState<PointTransactionFilter>("ALL")
+  const [ledgerSort, setLedgerSort] = useState<PointLedgerSort>("id,desc")
   const [ledgerFrom, setLedgerFrom] = useState("")
   const [ledgerTo, setLedgerTo] = useState("")
 
@@ -79,6 +91,7 @@ export const usePointPageState = () => {
     page: number,
     memberKeyword: string,
     transactionType: PointTransactionFilter,
+    sort: PointLedgerSort,
     from: string,
     to: string,
   ): Promise<void> => {
@@ -88,6 +101,7 @@ export const usePointPageState = () => {
       size: 50,
       memberKeyword,
       transactionType: transactionType === "ALL" ? undefined : transactionType,
+      sort,
       from: from || undefined,
       to: to || undefined,
     })
@@ -118,7 +132,7 @@ export const usePointPageState = () => {
   }
 
   useEffect(() => {
-    void fetchLedger(0, ledgerMemberKeyword, ledgerTransactionType, ledgerFrom, ledgerTo)
+    void fetchLedger(0, ledgerMemberKeyword, ledgerTransactionType, ledgerSort, ledgerFrom, ledgerTo)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -136,7 +150,7 @@ export const usePointPageState = () => {
       return
     }
     setLedgerPage(0)
-    await fetchLedger(0, ledgerMemberKeyword, ledgerTransactionType, ledgerFrom, ledgerTo)
+    await fetchLedger(0, ledgerMemberKeyword, ledgerTransactionType, ledgerSort, ledgerFrom, ledgerTo)
   }
 
   const moveLedgerPage = async (nextPage: number): Promise<void> => {
@@ -144,7 +158,13 @@ export const usePointPageState = () => {
       return
     }
     setLedgerPage(nextPage)
-    await fetchLedger(nextPage, ledgerMemberKeyword, ledgerTransactionType, ledgerFrom, ledgerTo)
+    await fetchLedger(nextPage, ledgerMemberKeyword, ledgerTransactionType, ledgerSort, ledgerFrom, ledgerTo)
+  }
+
+  const changeLedgerSort = async (nextSort: PointLedgerSort): Promise<void> => {
+    setLedgerSort(nextSort)
+    setLedgerPage(0)
+    await fetchLedger(0, ledgerMemberKeyword, ledgerTransactionType, nextSort, ledgerFrom, ledgerTo)
   }
 
   const handleSearchMembers = async (): Promise<void> => {
@@ -220,7 +240,7 @@ export const usePointPageState = () => {
     }
 
     setSingleAmount("")
-    await fetchLedger(ledgerPage, ledgerMemberKeyword, ledgerTransactionType, ledgerFrom, ledgerTo)
+    await fetchLedger(ledgerPage, ledgerMemberKeyword, ledgerTransactionType, ledgerSort, ledgerFrom, ledgerTo)
     if (selectedDetailMemberId !== null) {
       await fetchMemberPoint(selectedDetailMemberId)
     }
@@ -270,7 +290,7 @@ export const usePointPageState = () => {
     )
 
     setBatchAmount("")
-    await fetchLedger(ledgerPage, ledgerMemberKeyword, ledgerTransactionType, ledgerFrom, ledgerTo)
+    await fetchLedger(ledgerPage, ledgerMemberKeyword, ledgerTransactionType, ledgerSort, ledgerFrom, ledgerTo)
     if (selectedDetailMemberId !== null) {
       await fetchMemberPoint(selectedDetailMemberId)
     }
@@ -287,6 +307,8 @@ export const usePointPageState = () => {
     setLedgerMemberKeyword,
     ledgerTransactionType,
     setLedgerTransactionType,
+    ledgerSort,
+    setLedgerSort: changeLedgerSort,
     ledgerFrom,
     setLedgerFrom,
     ledgerTo,
