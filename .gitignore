@@ -26,3 +26,8 @@ dist-ssr
 # Environment variables
 .env
 .env.local
+
+*.md
+!README.md
+!AGENTS.md
+!CLAUDE.md
