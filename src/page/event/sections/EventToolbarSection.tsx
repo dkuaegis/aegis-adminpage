@@ -37,9 +37,15 @@ export const EventToolbarSection = ({
             value={searchDraft}
             onChange={(event) => onSearchTextChange(event.target.value)}
             onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                onApplySearch()
+              if (event.key !== "Enter") {
+                return
               }
+
+              if (event.nativeEvent.isComposing || isLoading) {
+                return
+              }
+
+              onApplySearch()
             }}
           />
         </div>
