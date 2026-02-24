@@ -1,6 +1,6 @@
 export type { ApiResult } from "@/lib/http/types";
 
-export type PointTransactionType = 'EARN' | 'SPEND';
+export type PointTransactionType = "EARN" | "SPEND";
 
 export interface AdminPointLedgerItem {
   pointTransactionId: number;
@@ -53,7 +53,7 @@ export interface AdminPointGrantResult {
   newBalance: number;
 }
 
-export type AdminPointBatchGrantStatus = 'SUCCESS' | 'DUPLICATE' | 'FAILED';
+export type AdminPointBatchGrantStatus = "SUCCESS" | "DUPLICATE" | "FAILED";
 
 export interface AdminPointBatchGrantMemberResult {
   memberId: number;

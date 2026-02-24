@@ -1,17 +1,17 @@
-import { Route, Routes } from "react-router-dom"
+import { Route, Routes } from "react-router-dom";
 
-import ProtectedLayout from "@/components/layout/ProtectedLayout"
-import { Toaster } from "@/components/ui/sonner"
-import Coupon from "@/page/coupon"
-import Event from "@/page/event"
-import FeatureFlagsPage from "@/page/feature-flags"
-import Home from "@/page/home"
-import Login from "@/page/login"
-import MemberDemotionPage from "@/page/member-demotion"
-import MemberManagementPage from "@/page/member-management"
-import NotFound from "@/page/notfound"
-import PaymentPage from "@/page/payment"
-import PointPage from "@/page/point"
+import ProtectedLayout from "@/components/layout/ProtectedLayout";
+import { Toaster } from "@/components/ui/sonner";
+import Coupon from "@/page/coupon";
+import Event from "@/page/event";
+import FeatureFlagsPage from "@/page/feature-flags";
+import Home from "@/page/home";
+import Login from "@/page/login";
+import MemberDemotionPage from "@/page/member-demotion";
+import MemberManagementPage from "@/page/member-management";
+import NotFound from "@/page/notfound";
+import PaymentPage from "@/page/payment";
+import PointPage from "@/page/point";
 
 const App: React.FC = () => {
   return (
@@ -34,7 +34,7 @@ const App: React.FC = () => {
       </Routes>
       <Toaster position="top-center" richColors />
     </>
-  )
-}
+  );
+};
 
-export default App
+export default App;

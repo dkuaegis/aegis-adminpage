@@ -1,10 +1,10 @@
-import AppShell from "@/components/layout/AppShell"
-import { Card, CardContent } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useAuthGuard } from "@/hooks/useAuthGuard"
+import AppShell from "@/components/layout/AppShell";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAuthGuard } from "@/hooks/useAuthGuard";
 
 export default function ProtectedLayout() {
-  const { isLoading, isAuthenticated } = useAuthGuard()
+  const { isLoading, isAuthenticated } = useAuthGuard();
 
   if (isLoading) {
     return (
@@ -17,12 +17,12 @@ export default function ProtectedLayout() {
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   if (!isAuthenticated) {
-    return null
+    return null;
   }
 
-  return <AppShell />
+  return <AppShell />;
 }

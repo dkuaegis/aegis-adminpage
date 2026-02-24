@@ -1,8 +1,8 @@
-import { requestApi } from './request';
-import type { AdminMember, ApiResult } from './types';
+import { requestApi } from "./request";
+import type { AdminMember, ApiResult } from "./types";
 
 export async function Members(): Promise<ApiResult<AdminMember>> {
-  return requestApi<AdminMember>('/members', {
-    method: 'GET',
+  return requestApi<AdminMember>("/members", {
+    method: "GET",
   });
 }

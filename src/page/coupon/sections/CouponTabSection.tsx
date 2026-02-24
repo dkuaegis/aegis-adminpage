@@ -1,30 +1,34 @@
-import { useMemo } from "react"
+import type {
+  ColumnDef,
+  PaginationState,
+  SortingState,
+  Updater,
+} from "@tanstack/react-table";
+import { useMemo } from "react";
 
-import type { ColumnDef, PaginationState, SortingState, Updater } from "@tanstack/react-table"
-
-import type { AdminCoupon, AdminCouponPageResponse } from "@/api/coupon/types"
-import { AdminDataTable } from "@/components/admin"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import type { AdminCoupon, AdminCouponPageResponse } from "@/api/coupon/types";
+import { AdminDataTable } from "@/components/admin";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface CouponTabSectionProps {
-  newCouponName: string
-  onNewCouponNameChange: (value: string) => void
-  newDiscountAmount: string
-  onNewDiscountAmountChange: (value: string) => void
-  onCreateCoupon: () => Promise<void>
-  couponPage: AdminCouponPageResponse | null
-  couponNameDrafts: Record<number, string>
-  onCouponNameDraftChange: (couponId: number, value: string) => void
-  onUpdateCouponName: (couponId: number) => Promise<void>
-  onDeleteCoupon: (couponId: number) => Promise<void>
-  sorting: SortingState
-  onSortingChange: (updater: Updater<SortingState>) => void
-  pagination: PaginationState
-  onPaginationChange: (updater: Updater<PaginationState>) => void
-  isLoading: boolean
+  newCouponName: string;
+  onNewCouponNameChange: (value: string) => void;
+  newDiscountAmount: string;
+  onNewDiscountAmountChange: (value: string) => void;
+  onCreateCoupon: () => Promise<void>;
+  couponPage: AdminCouponPageResponse | null;
+  couponNameDrafts: Record<number, string>;
+  onCouponNameDraftChange: (couponId: number, value: string) => void;
+  onUpdateCouponName: (couponId: number) => Promise<void>;
+  onDeleteCoupon: (couponId: number) => Promise<void>;
+  sorting: SortingState;
+  onSortingChange: (updater: Updater<SortingState>) => void;
+  pagination: PaginationState;
+  onPaginationChange: (updater: Updater<PaginationState>) => void;
+  isLoading: boolean;
 }
 
 export const CouponTabSection: React.FC<CouponTabSectionProps> = ({
@@ -67,7 +71,8 @@ export const CouponTabSection: React.FC<CouponTabSectionProps> = ({
           headerClassName: "text-right",
           cellClassName: "text-right",
         },
-        cell: ({ row }) => `${Number(row.original.discountAmount).toLocaleString("ko-KR")}원`,
+        cell: ({ row }) =>
+          `${Number(row.original.discountAmount).toLocaleString("ko-KR")}원`,
       },
       {
         id: "rename",
@@ -78,10 +83,21 @@ export const CouponTabSection: React.FC<CouponTabSectionProps> = ({
         cell: ({ row }) => (
           <div className="flex gap-2">
             <Input
-              value={couponNameDrafts[row.original.couponId] ?? row.original.couponName}
-              onChange={(event) => onCouponNameDraftChange(row.original.couponId, event.target.value)}
+              value={
+                couponNameDrafts[row.original.couponId] ??
+                row.original.couponName
+              }
+              onChange={(event) =>
+                onCouponNameDraftChange(
+                  row.original.couponId,
+                  event.target.value
+                )
+              }
             />
-            <Button variant="outline" onClick={() => void onUpdateCouponName(row.original.couponId)}>
+            <Button
+              variant="outline"
+              onClick={() => void onUpdateCouponName(row.original.couponId)}
+            >
               저장
             </Button>
           </div>
@@ -95,13 +111,22 @@ export const CouponTabSection: React.FC<CouponTabSectionProps> = ({
           cellClassName: "text-right",
         },
         cell: ({ row }) => (
-          <Button variant="destructive" size="sm" onClick={() => void onDeleteCoupon(row.original.couponId)}>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => void onDeleteCoupon(row.original.couponId)}
+          >
             삭제
           </Button>
         ),
       },
-    ]
-  }, [couponNameDrafts, onCouponNameDraftChange, onDeleteCoupon, onUpdateCouponName])
+    ];
+  }, [
+    couponNameDrafts,
+    onCouponNameDraftChange,
+    onDeleteCoupon,
+    onUpdateCouponName,
+  ]);
 
   return (
     <>
@@ -121,7 +146,9 @@ export const CouponTabSection: React.FC<CouponTabSectionProps> = ({
               type="number"
               min={1}
               value={newDiscountAmount}
-              onChange={(event) => onNewDiscountAmountChange(event.target.value)}
+              onChange={(event) =>
+                onNewDiscountAmountChange(event.target.value)
+              }
             />
           </div>
           <Button onClick={() => void onCreateCoupon()}>쿠폰 생성</Button>
@@ -147,5 +174,5 @@ export const CouponTabSection: React.FC<CouponTabSectionProps> = ({
         </CardContent>
       </Card>
     </>
-  )
-}
+  );
+};

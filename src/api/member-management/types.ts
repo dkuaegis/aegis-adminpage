@@ -1,8 +1,8 @@
 export type { ApiResult } from "@/lib/http/types";
 
-export type MemberRole = 'ADMIN' | 'USER' | 'GUEST';
-export type MemberRecordSource = 'PAYMENT_COMPLETED' | 'BACKFILL_PAYMENT';
-export type StudyRole = 'INSTRUCTOR' | 'PARTICIPANT';
+export type MemberRole = "ADMIN" | "USER" | "GUEST";
+export type MemberRecordSource = "PAYMENT_COMPLETED" | "BACKFILL_PAYMENT";
+export type StudyRole = "INSTRUCTOR" | "PARTICIPANT";
 
 export interface MemberRecordSemesterOption {
   yearSemester: string;

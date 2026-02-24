@@ -1,7 +1,7 @@
 export type { ApiResult } from "@/lib/http/types";
 
-export type PaymentStatus = 'PENDING' | 'COMPLETED';
-export type TransactionType = 'DEPOSIT' | 'WITHDRAWAL';
+export type PaymentStatus = "PENDING" | "COMPLETED";
+export type TransactionType = "DEPOSIT" | "WITHDRAWAL";
 
 export interface AdminPaymentItem {
   paymentId: number;

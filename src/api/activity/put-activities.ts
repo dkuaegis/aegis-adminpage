@@ -1,5 +1,5 @@
-import { requestApi } from './request';
-import type { ApiResult } from './types';
+import { requestApi } from "./request";
+import type { ApiResult } from "./types";
 
 export interface ActivityInfo {
   activityId: number;
@@ -8,9 +8,11 @@ export interface ActivityInfo {
 }
 
 // 조회
-export async function getActivityById(activityId: number): Promise<ApiResult<ActivityInfo>> {
+export async function getActivityById(
+  activityId: number
+): Promise<ApiResult<ActivityInfo>> {
   return requestApi<ActivityInfo>(`/admin/activities/${activityId}`, {
-    method: 'GET',
+    method: "GET",
   });
 }
 
@@ -18,7 +20,7 @@ export async function getActivityById(activityId: number): Promise<ApiResult<Act
 export async function updateActivity(
   activityId: number,
   name: string,
-  pointAmount: number,
+  pointAmount: number
 ): Promise<ApiResult<unknown>> {
   const requestBody = {
     name,
@@ -26,7 +28,7 @@ export async function updateActivity(
   };
 
   return requestApi(`/admin/activities/${activityId}`, {
-    method: 'PUT',
+    method: "PUT",
     body: JSON.stringify(requestBody),
   });
 }

@@ -1,13 +1,13 @@
-import { useState } from "react"
-import { Outlet } from "react-router-dom"
+import { useState } from "react";
+import { Outlet } from "react-router-dom";
 
-import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
-import AppHeader from "./AppHeader"
-import AppSidebar from "./AppSidebar"
+import AppHeader from "./AppHeader";
+import AppSidebar from "./AppSidebar";
 
 export default function AppShell() {
-  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -32,5 +32,5 @@ export default function AppShell() {
         </SheetContent>
       </Sheet>
     </div>
-  )
+  );
 }

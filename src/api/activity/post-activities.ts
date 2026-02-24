@@ -1,5 +1,5 @@
-import { requestApi } from './request';
-import type { ApiResult } from './types';
+import { requestApi } from "./request";
+import type { ApiResult } from "./types";
 
 export interface CreateActivityRequest {
   name: string;
@@ -8,15 +8,15 @@ export interface CreateActivityRequest {
 
 export async function createActivity(
   name: string,
-  pointAmount: number,
+  pointAmount: number
 ): Promise<ApiResult<unknown>> {
   const requestBody: CreateActivityRequest = {
     name,
     pointAmount,
   };
 
-  return requestApi('/admin/activities', {
-    method: 'POST',
+  return requestApi("/admin/activities", {
+    method: "POST",
     body: JSON.stringify(requestBody),
   });
 }

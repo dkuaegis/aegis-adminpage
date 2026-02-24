@@ -1,39 +1,46 @@
-import { useMemo } from "react"
+import type { ColumnDef } from "@tanstack/react-table";
+import { useMemo } from "react";
 
-import type { ColumnDef } from "@tanstack/react-table"
-
-import type { AdminTransactionItem } from "@/api/payment/types"
-import { AdminDataTable, AdminFilterBar, AdminSectionCard } from "@/components/admin"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import type { AdminTransactionItem } from "@/api/payment/types";
+import {
+  AdminDataTable,
+  AdminFilterBar,
+  AdminSectionCard,
+} from "@/components/admin";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import type {
   TransactionSectionActions,
   TransactionSectionState,
   TransactionTypeFilter,
   YearSemesterOption,
-} from "../hooks/usePaymentPageState"
+} from "../hooks/usePaymentPageState";
 
 interface TransactionManagementSectionProps {
-  yearSemesterOptions: YearSemesterOption[]
-  state: TransactionSectionState
-  actions: TransactionSectionActions
+  yearSemesterOptions: YearSemesterOption[];
+  state: TransactionSectionState;
+  actions: TransactionSectionActions;
 }
 
 function formatDateTime(value: string): string {
-  const parsed = new Date(value)
+  const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
-    return "-"
+    return "-";
   }
-  return parsed.toLocaleString("ko-KR", { hour12: false })
+  return parsed.toLocaleString("ko-KR", { hour12: false });
 }
 
-export const TransactionManagementSection: React.FC<TransactionManagementSectionProps> = ({
-  yearSemesterOptions,
-  state,
-  actions,
-}) => {
+export const TransactionManagementSection: React.FC<
+  TransactionManagementSectionProps
+> = ({ yearSemesterOptions, state, actions }) => {
   const columns = useMemo<ColumnDef<AdminTransactionItem>[]>(() => {
     return [
       {
@@ -65,7 +72,8 @@ export const TransactionManagementSection: React.FC<TransactionManagementSection
         id: "transactionType",
         accessorKey: "transactionType",
         header: "유형",
-        cell: ({ row }) => (row.original.transactionType === "DEPOSIT" ? "입금" : "출금"),
+        cell: ({ row }) =>
+          row.original.transactionType === "DEPOSIT" ? "입금" : "출금",
       },
       {
         id: "amount",
@@ -87,13 +95,16 @@ export const TransactionManagementSection: React.FC<TransactionManagementSection
           cellClassName: "text-right",
         },
       },
-    ]
-  }, [])
+    ];
+  }, []);
 
   return (
     <AdminSectionCard title="Transaction 조회" contentClassName="space-y-4">
       <AdminFilterBar className="md:grid-cols-7">
-        <Select value={state.yearSemester} onValueChange={actions.setYearSemester}>
+        <Select
+          value={state.yearSemester}
+          onValueChange={actions.setYearSemester}
+        >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -107,7 +118,12 @@ export const TransactionManagementSection: React.FC<TransactionManagementSection
           </SelectContent>
         </Select>
 
-        <Select value={state.type} onValueChange={(value) => actions.setType(value as TransactionTypeFilter)}>
+        <Select
+          value={state.type}
+          onValueChange={(value) =>
+            actions.setType(value as TransactionTypeFilter)
+          }
+        >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -123,10 +139,21 @@ export const TransactionManagementSection: React.FC<TransactionManagementSection
           onChange={(event) => actions.setDepositorKeyword(event.target.value)}
           placeholder="입금자명"
         />
-        <Input type="date" value={state.from} onChange={(event) => actions.setFrom(event.target.value)} />
-        <Input type="date" value={state.to} onChange={(event) => actions.setTo(event.target.value)} />
+        <Input
+          type="date"
+          value={state.from}
+          onChange={(event) => actions.setFrom(event.target.value)}
+        />
+        <Input
+          type="date"
+          value={state.to}
+          onChange={(event) => actions.setTo(event.target.value)}
+        />
         <div className="md:col-span-2">
-          <Button onClick={() => void actions.search()} disabled={state.isLoading}>
+          <Button
+            onClick={() => void actions.search()}
+            disabled={state.isLoading}
+          >
             조회
           </Button>
         </div>
@@ -147,5 +174,5 @@ export const TransactionManagementSection: React.FC<TransactionManagementSection
         getRowId={(row) => String(row.transactionId)}
       />
     </AdminSectionCard>
-  )
-}
+  );
+};

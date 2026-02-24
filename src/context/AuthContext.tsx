@@ -1,6 +1,13 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { Members } from '../api/auth/members';
-import { showError, showSuccess } from '@/utils/alert';
+import type React from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { showError, showSuccess } from "@/utils/alert";
+import { Members } from "../api/auth/members";
 
 interface AuthContextType {
   isAuthenticated: boolean | null; // null = loading, true = authenticated, false = not authenticated
@@ -9,23 +16,25 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
-  const maybeShowWelcomeMessage = (name: string) => {
-    const isLoginPage = window.location.pathname === '/login';
+  const maybeShowWelcomeMessage = useCallback((name: string) => {
+    const isLoginPage = window.location.pathname === "/login";
     if (isLoginPage) {
       return;
     }
 
-    const hasShownWelcome = sessionStorage.getItem('hasShownWelcome');
+    const hasShownWelcome = sessionStorage.getItem("hasShownWelcome");
     if (hasShownWelcome) {
       return;
     }
 
     showSuccess(`안녕하세요 ${name} 관리자님!`);
-    sessionStorage.setItem('hasShownWelcome', 'true');
-  };
+    sessionStorage.setItem("hasShownWelcome", "true");
+  }, []);
 
   const checkAuth = useCallback(async () => {
     try {
@@ -35,19 +44,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      if (response.data.role !== 'ADMIN') {
+      if (response.data.role !== "ADMIN") {
         setIsAuthenticated(false);
-        showError('로그인 실패! 관리자만 접근 가능합니다.');
+        showError("로그인 실패! 관리자만 접근 가능합니다.");
         return;
       }
 
       setIsAuthenticated(true);
       maybeShowWelcomeMessage(response.data.name);
     } catch (error) {
-      console.error('인증 확인 실패:', error);
+      console.error("인증 확인 실패:", error);
       setIsAuthenticated(false);
     }
-  }, []);
+  }, [maybeShowWelcomeMessage]);
 
   useEffect(() => {
     void checkAuth();
@@ -63,7 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

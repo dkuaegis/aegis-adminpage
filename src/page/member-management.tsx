@@ -1,22 +1,24 @@
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card";
 
 import {
   formatDateTime,
   useMemberManagementPageState,
-} from "./member-management/hooks/useMemberManagementPageState"
-import { MemberDetailSection } from "./member-management/sections/MemberDetailSection"
-import { MemberManagementHeaderSection } from "./member-management/sections/MemberManagementHeaderSection"
-import { MemberRecordsSection } from "./member-management/sections/MemberRecordsSection"
+} from "./member-management/hooks/useMemberManagementPageState";
+import { MemberDetailSection } from "./member-management/sections/MemberDetailSection";
+import { MemberManagementHeaderSection } from "./member-management/sections/MemberManagementHeaderSection";
+import { MemberRecordsSection } from "./member-management/sections/MemberRecordsSection";
 
 const MemberManagementPage: React.FC = () => {
-  const state = useMemberManagementPageState()
+  const state = useMemberManagementPageState();
 
   if (state.isSemesterLoading) {
     return (
       <Card>
-        <CardContent className="py-8 text-center text-muted-foreground">학기 정보를 불러오는 중입니다.</CardContent>
+        <CardContent className="py-8 text-center text-muted-foreground">
+          학기 정보를 불러오는 중입니다.
+        </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -60,7 +62,7 @@ const MemberManagementPage: React.FC = () => {
         />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default MemberManagementPage
+export default MemberManagementPage;

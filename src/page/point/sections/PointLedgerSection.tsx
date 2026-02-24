@@ -1,34 +1,47 @@
-import { useMemo } from "react"
+import type {
+  ColumnDef,
+  PaginationState,
+  SortingState,
+  Updater,
+} from "@tanstack/react-table";
+import { useMemo } from "react";
 
-import type { ColumnDef, PaginationState, SortingState, Updater } from "@tanstack/react-table"
+import type {
+  AdminPointLedgerItem,
+  AdminPointLedgerPage,
+} from "@/api/point/types";
+import { AdminDataTable } from "@/components/admin";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-import type { AdminPointLedgerItem, AdminPointLedgerPage } from "@/api/point/types"
-import { AdminDataTable } from "@/components/admin"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
-import type { PointTransactionFilter } from "../hooks/usePointPageState"
+import type { PointTransactionFilter } from "../hooks/usePointPageState";
 
 type PointLedgerSectionProps = {
-  isLedgerLoading: boolean
-  ledgerData: AdminPointLedgerPage | null
-  ledgerPagination: PaginationState
-  ledgerMemberKeyword: string
-  ledgerTransactionType: PointTransactionFilter
-  ledgerSorting: SortingState
-  ledgerFrom: string
-  ledgerTo: string
-  onLedgerMemberKeywordChange: (value: string) => void
-  onLedgerTransactionTypeChange: (value: PointTransactionFilter) => void
-  onLedgerSortingChange: (updater: Updater<SortingState>) => void
-  onLedgerPaginationChange: (updater: Updater<PaginationState>) => void
-  onLedgerFromChange: (value: string) => void
-  onLedgerToChange: (value: string) => void
-  onLedgerSearch: () => Promise<void>
-  formatDateTime: (value: string) => string
-}
+  isLedgerLoading: boolean;
+  ledgerData: AdminPointLedgerPage | null;
+  ledgerPagination: PaginationState;
+  ledgerMemberKeyword: string;
+  ledgerTransactionType: PointTransactionFilter;
+  ledgerSorting: SortingState;
+  ledgerFrom: string;
+  ledgerTo: string;
+  onLedgerMemberKeywordChange: (value: string) => void;
+  onLedgerTransactionTypeChange: (value: PointTransactionFilter) => void;
+  onLedgerSortingChange: (updater: Updater<SortingState>) => void;
+  onLedgerPaginationChange: (updater: Updater<PaginationState>) => void;
+  onLedgerFromChange: (value: string) => void;
+  onLedgerToChange: (value: string) => void;
+  onLedgerSearch: () => Promise<void>;
+  formatDateTime: (value: string) => string;
+};
 
 export const PointLedgerSection: React.FC<PointLedgerSectionProps> = ({
   isLedgerLoading,
@@ -75,7 +88,8 @@ export const PointLedgerSection: React.FC<PointLedgerSectionProps> = ({
         accessorKey: "transactionType",
         header: "유형",
         enableSorting: true,
-        cell: ({ row }) => (row.original.transactionType === "EARN" ? "적립" : "차감"),
+        cell: ({ row }) =>
+          row.original.transactionType === "EARN" ? "적립" : "차감",
       },
       {
         id: "amount",
@@ -92,8 +106,8 @@ export const PointLedgerSection: React.FC<PointLedgerSectionProps> = ({
         accessorKey: "reason",
         header: "사유",
       },
-    ]
-  }, [formatDateTime])
+    ];
+  }, [formatDateTime]);
 
   return (
     <Card>
@@ -104,13 +118,17 @@ export const PointLedgerSection: React.FC<PointLedgerSectionProps> = ({
         <div className="grid grid-cols-1 gap-3 md:grid-cols-6">
           <Input
             value={ledgerMemberKeyword}
-            onChange={(event) => onLedgerMemberKeywordChange(event.target.value)}
+            onChange={(event) =>
+              onLedgerMemberKeywordChange(event.target.value)
+            }
             placeholder="회원명/학번"
           />
 
           <Select
             value={ledgerTransactionType}
-            onValueChange={(value) => onLedgerTransactionTypeChange(value as PointTransactionFilter)}
+            onValueChange={(value) =>
+              onLedgerTransactionTypeChange(value as PointTransactionFilter)
+            }
           >
             <SelectTrigger>
               <SelectValue />
@@ -122,9 +140,20 @@ export const PointLedgerSection: React.FC<PointLedgerSectionProps> = ({
             </SelectContent>
           </Select>
 
-          <Input type="date" value={ledgerFrom} onChange={(event) => onLedgerFromChange(event.target.value)} />
-          <Input type="date" value={ledgerTo} onChange={(event) => onLedgerToChange(event.target.value)} />
-          <Button onClick={() => void onLedgerSearch()} disabled={isLedgerLoading}>
+          <Input
+            type="date"
+            value={ledgerFrom}
+            onChange={(event) => onLedgerFromChange(event.target.value)}
+          />
+          <Input
+            type="date"
+            value={ledgerTo}
+            onChange={(event) => onLedgerToChange(event.target.value)}
+          />
+          <Button
+            onClick={() => void onLedgerSearch()}
+            disabled={isLedgerLoading}
+          >
             조회
           </Button>
         </div>
@@ -145,5 +174,5 @@ export const PointLedgerSection: React.FC<PointLedgerSectionProps> = ({
         />
       </CardContent>
     </Card>
-  )
-}
+  );
+};

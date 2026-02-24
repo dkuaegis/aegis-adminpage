@@ -1,11 +1,11 @@
-import { usePointPageState } from "./point/hooks/usePointPageState"
-import { PointGrantSection } from "./point/sections/PointGrantSection"
-import { PointPageHeaderSection } from "./point/sections/PointPageHeaderSection"
-import { PointLedgerSection } from "./point/sections/PointLedgerSection"
-import { PointMemberSection } from "./point/sections/PointMemberSection"
+import { usePointPageState } from "./point/hooks/usePointPageState";
+import { PointGrantSection } from "./point/sections/PointGrantSection";
+import { PointLedgerSection } from "./point/sections/PointLedgerSection";
+import { PointMemberSection } from "./point/sections/PointMemberSection";
+import { PointPageHeaderSection } from "./point/sections/PointPageHeaderSection";
 
 const PointPage: React.FC = () => {
-  const state = usePointPageState()
+  const state = usePointPageState();
 
   return (
     <div className="space-y-5">
@@ -65,7 +65,7 @@ const PointPage: React.FC = () => {
         onBatchGrant={state.handleBatchGrant}
       />
     </div>
-  )
-}
+  );
+};
 
-export default PointPage
+export default PointPage;

@@ -1,47 +1,57 @@
-import { useMemo } from "react"
-
-import type { ColumnDef, PaginationState, SortingState, Updater } from "@tanstack/react-table"
+import type {
+  ColumnDef,
+  PaginationState,
+  SortingState,
+  Updater,
+} from "@tanstack/react-table";
+import { useMemo } from "react";
 
 import type {
   AdminCoupon,
   AdminIssuedCoupon,
   AdminIssuedCouponPageResponse,
   AdminMemberSummary,
-} from "@/api/coupon/types"
-import { AdminDataTable } from "@/components/admin"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+} from "@/api/coupon/types";
+import { AdminDataTable } from "@/components/admin";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface CouponIssuedTabSectionProps {
-  coupons: AdminCoupon[]
-  selectedCouponIdForIssue: number
-  onSelectedCouponIdForIssueChange: (couponId: number) => void
-  onCreateIssuedCoupons: () => Promise<void>
-  memberSearchText: string
-  onMemberSearchTextChange: (value: string) => void
-  filteredMembersForIssue: AdminMemberSummary[]
-  selectedMemberIdSet: Set<number>
-  isAllFilteredMembersSelected: boolean
-  selectedAmongFilteredCount: number
-  selectedMemberIdsForIssue: number[]
-  onSelectAllFilteredMembers: () => void
-  onClearFilteredMembers: () => void
-  onClearAllSelectedMembers: () => void
-  onToggleMemberForIssue: (memberId: number) => void
-  issuedCouponPage: AdminIssuedCouponPageResponse | null
-  onDeleteIssuedCoupon: (issuedCouponId: number) => Promise<void>
-  formatDateTime: (value: string | null) => string
-  sorting: SortingState
-  onSortingChange: (updater: Updater<SortingState>) => void
-  pagination: PaginationState
-  onPaginationChange: (updater: Updater<PaginationState>) => void
-  isLoading: boolean
+  coupons: AdminCoupon[];
+  selectedCouponIdForIssue: number;
+  onSelectedCouponIdForIssueChange: (couponId: number) => void;
+  onCreateIssuedCoupons: () => Promise<void>;
+  memberSearchText: string;
+  onMemberSearchTextChange: (value: string) => void;
+  filteredMembersForIssue: AdminMemberSummary[];
+  selectedMemberIdSet: Set<number>;
+  isAllFilteredMembersSelected: boolean;
+  selectedAmongFilteredCount: number;
+  selectedMemberIdsForIssue: number[];
+  onSelectAllFilteredMembers: () => void;
+  onClearFilteredMembers: () => void;
+  onClearAllSelectedMembers: () => void;
+  onToggleMemberForIssue: (memberId: number) => void;
+  issuedCouponPage: AdminIssuedCouponPageResponse | null;
+  onDeleteIssuedCoupon: (issuedCouponId: number) => Promise<void>;
+  formatDateTime: (value: string | null) => string;
+  sorting: SortingState;
+  onSortingChange: (updater: Updater<SortingState>) => void;
+  pagination: PaginationState;
+  onPaginationChange: (updater: Updater<PaginationState>) => void;
+  isLoading: boolean;
 }
 
 export const CouponIssuedTabSection: React.FC<CouponIssuedTabSectionProps> = ({
@@ -95,7 +105,9 @@ export const CouponIssuedTabSection: React.FC<CouponIssuedTabSectionProps> = ({
             <div>
               [{row.original.memberId}] {row.original.memberName}
             </div>
-            <div className="text-muted-foreground">{row.original.memberEmail}</div>
+            <div className="text-muted-foreground">
+              {row.original.memberEmail}
+            </div>
           </div>
         ),
       },
@@ -129,15 +141,17 @@ export const CouponIssuedTabSection: React.FC<CouponIssuedTabSectionProps> = ({
           <Button
             variant="destructive"
             size="sm"
-            onClick={() => void onDeleteIssuedCoupon(row.original.issuedCouponId)}
+            onClick={() =>
+              void onDeleteIssuedCoupon(row.original.issuedCouponId)
+            }
             disabled={!row.original.isValid}
           >
             삭제
           </Button>
         ),
       },
-    ]
-  }, [formatDateTime, onDeleteIssuedCoupon])
+    ];
+  }, [formatDateTime, onDeleteIssuedCoupon]);
 
   return (
     <>
@@ -147,22 +161,34 @@ export const CouponIssuedTabSection: React.FC<CouponIssuedTabSectionProps> = ({
             <div className="min-w-[280px] space-y-2">
               <Label>발급할 쿠폰</Label>
               <Select
-                value={selectedCouponIdForIssue ? String(selectedCouponIdForIssue) : ""}
-                onValueChange={(value) => onSelectedCouponIdForIssueChange(Number(value))}
+                value={
+                  selectedCouponIdForIssue
+                    ? String(selectedCouponIdForIssue)
+                    : ""
+                }
+                onValueChange={(value) =>
+                  onSelectedCouponIdForIssueChange(Number(value))
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="쿠폰 선택" />
                 </SelectTrigger>
                 <SelectContent>
                   {coupons.map((coupon) => (
-                    <SelectItem key={coupon.couponId} value={String(coupon.couponId)}>
-                      [{coupon.couponId}] {coupon.couponName} ({Number(coupon.discountAmount).toLocaleString("ko-KR")}원)
+                    <SelectItem
+                      key={coupon.couponId}
+                      value={String(coupon.couponId)}
+                    >
+                      [{coupon.couponId}] {coupon.couponName} (
+                      {Number(coupon.discountAmount).toLocaleString("ko-KR")}원)
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={() => void onCreateIssuedCoupons()}>선택 회원 쿠폰 발급</Button>
+            <Button onClick={() => void onCreateIssuedCoupons()}>
+              선택 회원 쿠폰 발급
+            </Button>
           </div>
 
           <div className="space-y-2">
@@ -178,7 +204,10 @@ export const CouponIssuedTabSection: React.FC<CouponIssuedTabSectionProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={onSelectAllFilteredMembers}
-                disabled={filteredMembersForIssue.length === 0 || isAllFilteredMembersSelected}
+                disabled={
+                  filteredMembersForIssue.length === 0 ||
+                  isAllFilteredMembersSelected
+                }
               >
                 검색 결과 전체 선택
               </Button>
@@ -199,31 +228,39 @@ export const CouponIssuedTabSection: React.FC<CouponIssuedTabSectionProps> = ({
                 전체 선택 해제
               </Button>
               <Badge variant="secondary">
-                총 {filteredMembersForIssue.length}명 중 {selectedAmongFilteredCount}명 선택
+                총 {filteredMembersForIssue.length}명 중{" "}
+                {selectedAmongFilteredCount}명 선택
               </Badge>
-              <Badge variant="outline">전체 선택 {selectedMemberIdsForIssue.length}명</Badge>
+              <Badge variant="outline">
+                전체 선택 {selectedMemberIdsForIssue.length}명
+              </Badge>
             </div>
 
             <ScrollArea className="h-56 rounded-lg border bg-background p-2">
               {filteredMembersForIssue.length === 0 ? (
-                <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
                   검색 조건에 맞는 회원이 없습니다.
                 </div>
               ) : (
                 <div className="space-y-1">
                   {filteredMembersForIssue.map((member) => (
-                    <label
+                    <div
                       key={member.memberId}
-                      className="flex cursor-pointer items-start gap-3 rounded-md px-2 py-1.5 hover:bg-accent"
+                      className="flex items-start gap-3 rounded-md px-2 py-1.5 hover:bg-accent"
                     >
                       <Checkbox
+                        aria-label={`${member.name} 회원 선택`}
                         checked={selectedMemberIdSet.has(member.memberId)}
-                        onCheckedChange={() => onToggleMemberForIssue(member.memberId)}
+                        onCheckedChange={() =>
+                          onToggleMemberForIssue(member.memberId)
+                        }
                       />
                       <span className="text-sm">
-                        [{member.memberId}] {member.name} ({member.studentId ?? "학번 미입력"}, {member.email}) - {member.role}
+                        [{member.memberId}] {member.name} (
+                        {member.studentId ?? "학번 미입력"}, {member.email}) -{" "}
+                        {member.role}
                       </span>
-                    </label>
+                    </div>
                   ))}
                 </div>
               )}
@@ -251,5 +288,5 @@ export const CouponIssuedTabSection: React.FC<CouponIssuedTabSectionProps> = ({
         </CardContent>
       </Card>
     </>
-  )
-}
+  );
+};

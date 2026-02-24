@@ -4,4 +4,4 @@ export interface AdminMember {
   role: string;
 }
 
-export type { ApiResult } from '@/lib/http/types';
+export type { ApiResult } from "@/lib/http/types";

@@ -1,13 +1,18 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 interface CouponPageHeaderProps {
-  searchDraft: string
-  appliedKeyword: string
-  isLoading: boolean
-  onSearchDraftChange: (value: string) => void
-  onApplySearch: () => void
+  searchDraft: string;
+  appliedKeyword: string;
+  isLoading: boolean;
+  onSearchDraftChange: (value: string) => void;
+  onApplySearch: () => void;
 }
 
 export const CouponPageHeader: React.FC<CouponPageHeaderProps> = ({
@@ -22,7 +27,9 @@ export const CouponPageHeader: React.FC<CouponPageHeaderProps> = ({
       <CardHeader className="flex flex-row flex-wrap items-end justify-between gap-3">
         <div>
           <CardTitle className="text-2xl">쿠폰 관리</CardTitle>
-          <CardDescription>쿠폰, 쿠폰 코드, 발급된 쿠폰을 한 화면에서 관리합니다.</CardDescription>
+          <CardDescription>
+            쿠폰, 쿠폰 코드, 발급된 쿠폰을 한 화면에서 관리합니다.
+          </CardDescription>
           <CardDescription>
             적용된 검색어: {appliedKeyword ? `"${appliedKeyword}"` : "(없음)"}
           </CardDescription>
@@ -34,7 +41,7 @@ export const CouponPageHeader: React.FC<CouponPageHeaderProps> = ({
             onChange={(event) => onSearchDraftChange(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "Enter") {
-                onApplySearch()
+                onApplySearch();
               }
             }}
             placeholder="ID, 쿠폰명, 회원명, 학번, 이메일, 코드, 설명 검색"
@@ -45,5 +52,5 @@ export const CouponPageHeader: React.FC<CouponPageHeaderProps> = ({
         </div>
       </CardHeader>
     </Card>
-  )
-}
+  );
+};

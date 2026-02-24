@@ -1,12 +1,17 @@
-import { AdminPageHeader } from "@/components/admin"
+import { AdminPageHeader } from "@/components/admin";
 
-import { usePaymentPageState } from "./payment/hooks/usePaymentPageState"
-import { PaymentManagementSection } from "./payment/sections/PaymentManagementSection"
-import { TransactionManagementSection } from "./payment/sections/TransactionManagementSection"
+import { usePaymentPageState } from "./payment/hooks/usePaymentPageState";
+import { PaymentManagementSection } from "./payment/sections/PaymentManagementSection";
+import { TransactionManagementSection } from "./payment/sections/TransactionManagementSection";
 
 const PaymentPage: React.FC = () => {
-  const { yearSemesterOptions, paymentState, paymentActions, transactionState, transactionActions } =
-    usePaymentPageState()
+  const {
+    yearSemesterOptions,
+    paymentState,
+    paymentActions,
+    transactionState,
+    transactionActions,
+  } = usePaymentPageState();
 
   return (
     <div className="space-y-5">
@@ -26,7 +31,7 @@ const PaymentPage: React.FC = () => {
         actions={transactionActions}
       />
     </div>
-  )
-}
+  );
+};
 
-export default PaymentPage
+export default PaymentPage;

@@ -1,10 +1,10 @@
-import { useEventPageState } from "./event/hooks/useEventPageState"
-import { EventDialogsSection } from "./event/sections/EventDialogsSection"
-import { EventTableSection } from "./event/sections/EventTableSection"
-import { EventToolbarSection } from "./event/sections/EventToolbarSection"
+import { useEventPageState } from "./event/hooks/useEventPageState";
+import { EventDialogsSection } from "./event/sections/EventDialogsSection";
+import { EventTableSection } from "./event/sections/EventTableSection";
+import { EventToolbarSection } from "./event/sections/EventToolbarSection";
 
 const Event = () => {
-  const state = useEventPageState()
+  const state = useEventPageState();
 
   return (
     <div className="space-y-5">
@@ -44,7 +44,7 @@ const Event = () => {
         onCloseQR={state.handleCloseQR}
       />
     </div>
-  )
-}
+  );
+};
 
-export default Event
+export default Event;

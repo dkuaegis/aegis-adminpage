@@ -1,33 +1,49 @@
-import { useMemo } from "react"
+import type {
+  ColumnDef,
+  PaginationState,
+  SortingState,
+  Updater,
+} from "@tanstack/react-table";
+import { useMemo } from "react";
 
-import type { ColumnDef, PaginationState, SortingState, Updater } from "@tanstack/react-table"
+import type {
+  AdminMemberRecordItem,
+  AdminMemberRecordPage,
+} from "@/api/member-management/types";
+import { AdminDataTable } from "@/components/admin";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-import type { AdminMemberRecordItem, AdminMemberRecordPage } from "@/api/member-management/types"
-import { AdminDataTable } from "@/components/admin"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
-import type { MemberRoleFilter, MemberSortPreset } from "../hooks/useMemberManagementPageState"
+import type {
+  MemberRoleFilter,
+  MemberSortPreset,
+} from "../hooks/useMemberManagementPageState";
 
 interface MemberRecordsSectionProps {
-  keywordInput: string
-  roleFilter: MemberRoleFilter
-  sortPreset: MemberSortPreset
-  sorting: SortingState
-  recordPagination: PaginationState
-  recordPage: AdminMemberRecordPage | null
-  isRecordLoading: boolean
-  selectedMemberId: number | null
-  formatDateTime: (value: string | null) => string
-  onKeywordInputChange: (value: string) => void
-  onRoleFilterChange: (value: MemberRoleFilter) => void
-  onSortPresetChange: (value: MemberSortPreset) => void
-  onSortingChange: (updater: Updater<SortingState>) => void
-  onPaginationChange: (updater: Updater<PaginationState>) => void
-  onSearch: () => void
-  onSelectMember: (record: AdminMemberRecordItem) => void
+  keywordInput: string;
+  roleFilter: MemberRoleFilter;
+  sortPreset: MemberSortPreset;
+  sorting: SortingState;
+  recordPagination: PaginationState;
+  recordPage: AdminMemberRecordPage | null;
+  isRecordLoading: boolean;
+  selectedMemberId: number | null;
+  formatDateTime: (value: string | null) => string;
+  onKeywordInputChange: (value: string) => void;
+  onRoleFilterChange: (value: MemberRoleFilter) => void;
+  onSortPresetChange: (value: MemberSortPreset) => void;
+  onSortingChange: (updater: Updater<SortingState>) => void;
+  onPaginationChange: (updater: Updater<PaginationState>) => void;
+  onSearch: () => void;
+  onSelectMember: (record: AdminMemberRecordItem) => void;
 }
 
 export const MemberRecordsSection: React.FC<MemberRecordsSectionProps> = ({
@@ -67,7 +83,11 @@ export const MemberRecordsSection: React.FC<MemberRecordsSectionProps> = ({
         id: "email",
         accessorKey: "snapshotEmail",
         header: "이메일",
-        cell: ({ row }) => <div className="max-w-[220px] truncate">{row.original.snapshotEmail}</div>,
+        cell: ({ row }) => (
+          <div className="max-w-[220px] truncate">
+            {row.original.snapshotEmail}
+          </div>
+        ),
       },
       {
         id: "role",
@@ -97,8 +117,8 @@ export const MemberRecordsSection: React.FC<MemberRecordsSectionProps> = ({
         header: "결제 완료 시각",
         cell: ({ row }) => formatDateTime(row.original.paymentCompletedAt),
       },
-    ]
-  }, [formatDateTime])
+    ];
+  }, [formatDateTime]);
 
   return (
     <Card>
@@ -109,14 +129,19 @@ export const MemberRecordsSection: React.FC<MemberRecordsSectionProps> = ({
             onChange={(event) => onKeywordInputChange(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "Enter") {
-                onSearch()
+                onSearch();
               }
             }}
             placeholder="이름/학번/이메일 검색"
             className="w-[280px]"
           />
 
-          <Select value={roleFilter} onValueChange={(value) => onRoleFilterChange(value as MemberRoleFilter)}>
+          <Select
+            value={roleFilter}
+            onValueChange={(value) =>
+              onRoleFilterChange(value as MemberRoleFilter)
+            }
+          >
             <SelectTrigger className="w-[150px]">
               <SelectValue />
             </SelectTrigger>
@@ -128,7 +153,12 @@ export const MemberRecordsSection: React.FC<MemberRecordsSectionProps> = ({
             </SelectContent>
           </Select>
 
-          <Select value={sortPreset} onValueChange={(value) => onSortPresetChange(value as MemberSortPreset)}>
+          <Select
+            value={sortPreset}
+            onValueChange={(value) =>
+              onSortPresetChange(value as MemberSortPreset)
+            }
+          >
             <SelectTrigger className="w-[190px]">
               <SelectValue />
             </SelectTrigger>
@@ -157,9 +187,11 @@ export const MemberRecordsSection: React.FC<MemberRecordsSectionProps> = ({
           emptyMessage="조회 결과가 없습니다."
           getRowId={(row) => String(row.memberRecordId)}
           onRowClick={onSelectMember}
-          rowClassName={(row) => (selectedMemberId === row.memberRecordId ? "bg-accent" : undefined)}
+          rowClassName={(row) =>
+            selectedMemberId === row.memberRecordId ? "bg-accent" : undefined
+          }
         />
       </CardContent>
     </Card>
-  )
-}
+  );
+};

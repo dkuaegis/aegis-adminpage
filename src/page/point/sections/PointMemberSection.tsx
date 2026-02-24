@@ -1,23 +1,33 @@
-import type { AdminPointMemberPoint, AdminPointMemberSearch } from "@/api/point/types"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import type {
+  AdminPointMemberPoint,
+  AdminPointMemberSearch,
+} from "@/api/point/types";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type PointMemberSectionProps = {
-  memberSearchKeyword: string
-  isMemberSearchLoading: boolean
-  memberSearchResults: AdminPointMemberSearch[]
-  selectedBatchMemberIdSet: Set<number>
-  isMemberPointLoading: boolean
-  memberPoint: AdminPointMemberPoint | null
-  onMemberSearchKeywordChange: (value: string) => void
-  onSearchMembers: () => Promise<void>
-  onToggleBatchMember: (member: AdminPointMemberSearch) => void
-  onFetchMemberPoint: (memberId: number) => Promise<void>
-  formatDateTime: (value: string) => string
-}
+  memberSearchKeyword: string;
+  isMemberSearchLoading: boolean;
+  memberSearchResults: AdminPointMemberSearch[];
+  selectedBatchMemberIdSet: Set<number>;
+  isMemberPointLoading: boolean;
+  memberPoint: AdminPointMemberPoint | null;
+  onMemberSearchKeywordChange: (value: string) => void;
+  onSearchMembers: () => Promise<void>;
+  onToggleBatchMember: (member: AdminPointMemberSearch) => void;
+  onFetchMemberPoint: (memberId: number) => Promise<void>;
+  formatDateTime: (value: string) => string;
+};
 
 export const PointMemberSection: React.FC<PointMemberSectionProps> = ({
   memberSearchKeyword,
@@ -41,10 +51,15 @@ export const PointMemberSection: React.FC<PointMemberSectionProps> = ({
         <div className="flex gap-2">
           <Input
             value={memberSearchKeyword}
-            onChange={(event) => onMemberSearchKeywordChange(event.target.value)}
+            onChange={(event) =>
+              onMemberSearchKeywordChange(event.target.value)
+            }
             placeholder="학번 또는 이름으로 검색 (2자 이상)"
           />
-          <Button onClick={() => void onSearchMembers()} disabled={isMemberSearchLoading}>
+          <Button
+            onClick={() => void onSearchMembers()}
+            disabled={isMemberSearchLoading}
+          >
             검색
           </Button>
         </div>
@@ -73,7 +88,11 @@ export const PointMemberSection: React.FC<PointMemberSectionProps> = ({
                   <TableCell>{member.studentId ?? "-"}</TableCell>
                   <TableCell>{member.memberId}</TableCell>
                   <TableCell>
-                    <Button variant="outline" size="sm" onClick={() => void onFetchMemberPoint(member.memberId)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void onFetchMemberPoint(member.memberId)}
+                    >
                       상세 조회
                     </Button>
                   </TableCell>
@@ -81,8 +100,13 @@ export const PointMemberSection: React.FC<PointMemberSectionProps> = ({
               ))}
               {memberSearchResults.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-16 text-center text-muted-foreground">
-                    {isMemberSearchLoading ? "회원 검색 중..." : "검색 결과가 없습니다."}
+                  <TableCell
+                    colSpan={5}
+                    className="h-16 text-center text-muted-foreground"
+                  >
+                    {isMemberSearchLoading
+                      ? "회원 검색 중..."
+                      : "검색 결과가 없습니다."}
                   </TableCell>
                 </TableRow>
               )}
@@ -92,7 +116,11 @@ export const PointMemberSection: React.FC<PointMemberSectionProps> = ({
 
         <div className="space-y-3 rounded-lg border p-4">
           <h3 className="font-semibold">회원 상세</h3>
-          {isMemberPointLoading && <div className="text-sm text-muted-foreground">회원 정보를 불러오는 중...</div>}
+          {isMemberPointLoading && (
+            <div className="text-muted-foreground text-sm">
+              회원 정보를 불러오는 중...
+            </div>
+          )}
 
           {!isMemberPointLoading && memberPoint && (
             <>
@@ -117,8 +145,12 @@ export const PointMemberSection: React.FC<PointMemberSectionProps> = ({
                   <TableBody>
                     {memberPoint.recentHistory.map((history) => (
                       <TableRow key={history.pointTransactionId}>
-                        <TableCell>{formatDateTime(history.createdAt)}</TableCell>
-                        <TableCell>{history.transactionType === "EARN" ? "적립" : "차감"}</TableCell>
+                        <TableCell>
+                          {formatDateTime(history.createdAt)}
+                        </TableCell>
+                        <TableCell>
+                          {history.transactionType === "EARN" ? "적립" : "차감"}
+                        </TableCell>
                         <TableCell>{history.amount}</TableCell>
                         <TableCell>{history.reason}</TableCell>
                       </TableRow>
@@ -130,10 +162,12 @@ export const PointMemberSection: React.FC<PointMemberSectionProps> = ({
           )}
 
           {!isMemberPointLoading && !memberPoint && (
-            <div className="text-sm text-muted-foreground">상세 조회할 회원을 선택해주세요.</div>
+            <div className="text-muted-foreground text-sm">
+              상세 조회할 회원을 선택해주세요.
+            </div>
           )}
         </div>
       </CardContent>
     </Card>
-  )
-}
+  );
+};

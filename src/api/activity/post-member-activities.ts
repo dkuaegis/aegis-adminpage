@@ -1,5 +1,5 @@
-import { requestApi } from './request';
-import type { ApiResult } from './types';
+import { requestApi } from "./request";
+import type { ApiResult } from "./types";
 
 export interface MemberActivityRequest {
   activityId: number;
@@ -8,15 +8,15 @@ export interface MemberActivityRequest {
 
 export async function PostMemberActivities(
   activityId: number,
-  memberId: number,
+  memberId: number
 ): Promise<ApiResult<unknown>> {
   const requestBody: MemberActivityRequest = {
     activityId,
     memberId,
   };
 
-  return requestApi('/admin/activity-participation', {
-    method: 'POST',
+  return requestApi("/admin/activity-participation", {
+    method: "POST",
     body: JSON.stringify(requestBody),
   });
 }

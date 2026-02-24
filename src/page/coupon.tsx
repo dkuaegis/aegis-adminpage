@@ -1,12 +1,15 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { formatDateTime, useCouponPageState } from "@/page/coupon/hooks/useCouponPageState"
-import { CouponCodeTabSection } from "@/page/coupon/sections/CouponCodeTabSection"
-import { CouponPageHeader } from "@/page/coupon/sections/CouponPageHeader"
-import { CouponIssuedTabSection } from "@/page/coupon/sections/CouponIssuedTabSection"
-import { CouponTabSection } from "@/page/coupon/sections/CouponTabSection"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  formatDateTime,
+  useCouponPageState,
+} from "@/page/coupon/hooks/useCouponPageState";
+import { CouponCodeTabSection } from "@/page/coupon/sections/CouponCodeTabSection";
+import { CouponIssuedTabSection } from "@/page/coupon/sections/CouponIssuedTabSection";
+import { CouponPageHeader } from "@/page/coupon/sections/CouponPageHeader";
+import { CouponTabSection } from "@/page/coupon/sections/CouponTabSection";
 
 const CouponPage: React.FC = () => {
-  const state = useCouponPageState()
+  const state = useCouponPageState();
 
   return (
     <div className="space-y-5">
@@ -18,7 +21,10 @@ const CouponPage: React.FC = () => {
         onApplySearch={state.handleApplySearch}
       />
 
-      <Tabs value={state.tab} onValueChange={(value) => state.setTab(value as typeof state.tab)}>
+      <Tabs
+        value={state.tab}
+        onValueChange={(value) => state.setTab(value as typeof state.tab)}
+      >
         <TabsList>
           <TabsTrigger value="coupon">쿠폰</TabsTrigger>
           <TabsTrigger value="code">쿠폰 코드</TabsTrigger>
@@ -93,7 +99,7 @@ const CouponPage: React.FC = () => {
         </TabsContent>
       </Tabs>
     </div>
-  )
-}
+  );
+};
 
-export default CouponPage
+export default CouponPage;

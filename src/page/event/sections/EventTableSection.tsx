@@ -1,28 +1,32 @@
-import { useMemo } from "react"
+import type {
+  ColumnDef,
+  PaginationState,
+  SortingState,
+  Updater,
+} from "@tanstack/react-table";
 
-import { QrCode } from "lucide-react"
+import { QrCode } from "lucide-react";
+import { useMemo } from "react";
 
-import type { ColumnDef, PaginationState, SortingState, Updater } from "@tanstack/react-table"
+import { AdminDataTable } from "@/components/admin";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
-import { AdminDataTable } from "@/components/admin"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-
-import type { EventRow } from "../hooks/useEventPageState"
+import type { EventRow } from "../hooks/useEventPageState";
 
 interface EventTableSectionProps {
-  isLoading: boolean
-  rows: EventRow[]
-  sorting: SortingState
-  onSortingChange: (updater: Updater<SortingState>) => void
-  pagination: PaginationState
-  onPaginationChange: (updater: Updater<PaginationState>) => void
-  totalPages: number
-  totalElements: number
-  onOpenEditDialog: (activityId: number) => Promise<void>
-  onDelete: (activityId: number) => Promise<void>
-  onOpenQR: (eventId: number) => void
+  isLoading: boolean;
+  rows: EventRow[];
+  sorting: SortingState;
+  onSortingChange: (updater: Updater<SortingState>) => void;
+  pagination: PaginationState;
+  onPaginationChange: (updater: Updater<PaginationState>) => void;
+  totalPages: number;
+  totalElements: number;
+  onOpenEditDialog: (activityId: number) => Promise<void>;
+  onDelete: (activityId: number) => Promise<void>;
+  onOpenQR: (eventId: number) => void;
 }
 
 export const EventTableSection = ({
@@ -65,7 +69,9 @@ export const EventTableSection = ({
           headerClassName: "w-28 text-right",
           cellClassName: "text-right",
         },
-        cell: ({ row }) => <Badge variant="secondary">{row.original.amount}</Badge>,
+        cell: ({ row }) => (
+          <Badge variant="secondary">{row.original.amount}</Badge>
+        ),
       },
       {
         id: "actions",
@@ -76,10 +82,18 @@ export const EventTableSection = ({
         },
         cell: ({ row }) => (
           <div className="flex justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={() => void onOpenEditDialog(row.original.id)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void onOpenEditDialog(row.original.id)}
+            >
               수정
             </Button>
-            <Button variant="destructive" size="sm" onClick={() => void onDelete(row.original.id)}>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => void onDelete(row.original.id)}
+            >
               삭제
             </Button>
             <Button size="sm" onClick={() => onOpenQR(row.original.id)}>
@@ -89,8 +103,8 @@ export const EventTableSection = ({
           </div>
         ),
       },
-    ]
-  }, [onDelete, onOpenEditDialog, onOpenQR])
+    ];
+  }, [onDelete, onOpenEditDialog, onOpenQR]);
 
   return (
     <Card>
@@ -111,5 +125,5 @@ export const EventTableSection = ({
         />
       </CardContent>
     </Card>
-  )
-}
+  );
+};

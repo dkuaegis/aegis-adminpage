@@ -1,6 +1,6 @@
 interface ResolveAdminErrorMessageOptions {
-  overrides?: Record<string, string>
-  fallback?: string
+  overrides?: Record<string, string>;
+  fallback?: string;
 }
 
 const DEFAULT_ADMIN_ERROR_MESSAGES: Record<string, string> = {
@@ -10,21 +10,21 @@ const DEFAULT_ADMIN_ERROR_MESSAGES: Record<string, string> = {
   MEMBER_NOT_FOUND: "회원을 찾을 수 없습니다.",
   UNAUTHORIZED: "인증이 필요합니다.",
   FORBIDDEN: "권한이 없습니다.",
-}
+};
 
 export function resolveAdminErrorMessage(
   errorName?: string,
-  options?: ResolveAdminErrorMessageOptions,
+  options?: ResolveAdminErrorMessageOptions
 ): string {
-  const fallback = options?.fallback ?? "요청 처리에 실패했습니다."
+  const fallback = options?.fallback ?? "요청 처리에 실패했습니다.";
 
   if (!errorName) {
-    return fallback
+    return fallback;
   }
 
   if (options?.overrides?.[errorName]) {
-    return options.overrides[errorName]
+    return options.overrides[errorName];
   }
 
-  return DEFAULT_ADMIN_ERROR_MESSAGES[errorName] ?? fallback
+  return DEFAULT_ADMIN_ERROR_MESSAGES[errorName] ?? fallback;
 }

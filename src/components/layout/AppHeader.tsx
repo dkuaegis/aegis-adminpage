@@ -1,33 +1,32 @@
-import { LogOut, Menu } from "lucide-react"
-import { useNavigate } from "react-router-dom"
-
-import AegisLogo from "@/assets/logos/aegis.svg"
-import { logout } from "@/api/auth/logout"
-import { Button } from "@/components/ui/button"
-import { showConfirm, showError, showSuccess } from "@/utils/alert"
+import { LogOut, Menu } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { logout } from "@/api/auth/logout";
+import AegisLogo from "@/assets/logos/aegis.svg";
+import { Button } from "@/components/ui/button";
+import { showConfirm, showError, showSuccess } from "@/utils/alert";
 
 interface AppHeaderProps {
-  onOpenMobileSidebar: () => void
+  onOpenMobileSidebar: () => void;
 }
 
 export default function AppHeader({ onOpenMobileSidebar }: AppHeaderProps) {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
-    const confirmed = await showConfirm("로그아웃 하시겠습니까?")
+    const confirmed = await showConfirm("로그아웃 하시겠습니까?");
     if (!confirmed) {
-      return
+      return;
     }
 
-    const success = await logout()
+    const success = await logout();
     if (!success) {
-      showError("로그아웃 중 오류가 발생했습니다.")
-      return
+      showError("로그아웃 중 오류가 발생했습니다.");
+      return;
     }
 
-    showSuccess("로그아웃 되었습니다.")
-    window.location.href = "/login"
-  }
+    showSuccess("로그아웃 되었습니다.");
+    window.location.href = "/login";
+  };
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur">
@@ -44,11 +43,12 @@ export default function AppHeader({ onOpenMobileSidebar }: AppHeaderProps) {
           </Button>
 
           <button
+            type="button"
             onClick={() => navigate("/")}
             className="flex items-center gap-3 rounded-lg px-2 py-1 hover:bg-accent"
           >
             <img className="size-8" src={AegisLogo} alt="Aegis Logo" />
-            <span className="text-lg font-semibold">Aegis Admin</span>
+            <span className="font-semibold text-lg">Aegis Admin</span>
           </button>
         </div>
 
@@ -58,5 +58,5 @@ export default function AppHeader({ onOpenMobileSidebar }: AppHeaderProps) {
         </Button>
       </div>
     </header>
-  )
+  );
 }

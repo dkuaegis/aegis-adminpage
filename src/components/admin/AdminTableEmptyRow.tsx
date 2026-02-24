@@ -1,10 +1,10 @@
-import { TableCell, TableRow } from "@/components/ui/table"
+import { TableCell, TableRow } from "@/components/ui/table";
 
 interface AdminTableEmptyRowProps {
-  colSpan: number
-  isLoading: boolean
-  loadingMessage: string
-  emptyMessage: string
+  colSpan: number;
+  isLoading: boolean;
+  loadingMessage: string;
+  emptyMessage: string;
 }
 
 export function AdminTableEmptyRow({
@@ -15,9 +15,12 @@ export function AdminTableEmptyRow({
 }: AdminTableEmptyRowProps) {
   return (
     <TableRow>
-      <TableCell colSpan={colSpan} className="h-16 text-center text-muted-foreground">
+      <TableCell
+        colSpan={colSpan}
+        className="h-16 text-center text-muted-foreground"
+      >
         {isLoading ? loadingMessage : emptyMessage}
       </TableCell>
     </TableRow>
-  )
+  );
 }

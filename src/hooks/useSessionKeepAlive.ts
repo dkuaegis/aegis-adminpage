@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Members } from '../api/auth/members';
+import { useEffect } from "react";
+import { Members } from "../api/auth/members";
 
 interface UseSessionKeepAliveOptions {
   enabled?: boolean;
@@ -29,8 +29,10 @@ export function useSessionKeepAlive({
       inFlight = true;
       try {
         const response = await Members();
-        const isAuthFailure = response.status === 401 || response.status === 403;
-        const isRoleMismatch = response.ok && (!response.data || response.data.role !== 'ADMIN');
+        const isAuthFailure =
+          response.status === 401 || response.status === 403;
+        const isRoleMismatch =
+          response.ok && (!response.data || response.data.role !== "ADMIN");
         const unauthorized = isAuthFailure || isRoleMismatch;
         if (active && unauthorized) {
           onUnauthorized?.();

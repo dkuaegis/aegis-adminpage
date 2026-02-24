@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react"
+import type { LucideIcon } from "lucide-react";
 import {
   BadgeDollarSign,
   CalendarDays,
@@ -8,12 +8,12 @@ import {
   Ticket,
   UserMinus,
   Users,
-} from "lucide-react"
+} from "lucide-react";
 
 export interface NavItem {
-  to: string
-  label: string
-  icon: LucideIcon
+  to: string;
+  label: string;
+  icon: LucideIcon;
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -25,4 +25,4 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/member-demotion", label: "회원 강등", icon: UserMinus },
   { to: "/payment", label: "결제", icon: CreditCard },
   { to: "/point", label: "포인트", icon: BadgeDollarSign },
-]
+];

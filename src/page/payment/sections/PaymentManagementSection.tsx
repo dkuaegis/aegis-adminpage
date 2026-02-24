@@ -1,39 +1,46 @@
-import { useMemo } from "react"
+import type { ColumnDef } from "@tanstack/react-table";
+import { useMemo } from "react";
 
-import type { ColumnDef } from "@tanstack/react-table"
-
-import type { AdminPaymentItem } from "@/api/payment/types"
-import { AdminDataTable, AdminFilterBar, AdminSectionCard } from "@/components/admin"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import type { AdminPaymentItem } from "@/api/payment/types";
+import {
+  AdminDataTable,
+  AdminFilterBar,
+  AdminSectionCard,
+} from "@/components/admin";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import type {
   PaymentSectionActions,
   PaymentSectionState,
   PaymentStatusFilter,
   YearSemesterOption,
-} from "../hooks/usePaymentPageState"
+} from "../hooks/usePaymentPageState";
 
 interface PaymentManagementSectionProps {
-  yearSemesterOptions: YearSemesterOption[]
-  state: PaymentSectionState
-  actions: PaymentSectionActions
+  yearSemesterOptions: YearSemesterOption[];
+  state: PaymentSectionState;
+  actions: PaymentSectionActions;
 }
 
 function formatDateTime(value: string): string {
-  const parsed = new Date(value)
+  const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
-    return "-"
+    return "-";
   }
-  return parsed.toLocaleString("ko-KR", { hour12: false })
+  return parsed.toLocaleString("ko-KR", { hour12: false });
 }
 
-export const PaymentManagementSection: React.FC<PaymentManagementSectionProps> = ({
-  yearSemesterOptions,
-  state,
-  actions,
-}) => {
+export const PaymentManagementSection: React.FC<
+  PaymentManagementSectionProps
+> = ({ yearSemesterOptions, state, actions }) => {
   const columns = useMemo<ColumnDef<AdminPaymentItem>[]>(() => {
     return [
       {
@@ -86,7 +93,7 @@ export const PaymentManagementSection: React.FC<PaymentManagementSectionProps> =
         id: "actions",
         header: "동작",
         cell: ({ row }) => {
-          const payment = row.original
+          const payment = row.original;
 
           return (
             <Button
@@ -94,21 +101,30 @@ export const PaymentManagementSection: React.FC<PaymentManagementSectionProps> =
               variant="outline"
               onClick={() => void actions.forceComplete(payment.paymentId)}
               disabled={
-                payment.status !== "PENDING" || state.forceCompletingPaymentId === payment.paymentId
+                payment.status !== "PENDING" ||
+                state.forceCompletingPaymentId === payment.paymentId
               }
             >
-              {state.forceCompletingPaymentId === payment.paymentId ? "처리 중..." : "강제 완료"}
+              {state.forceCompletingPaymentId === payment.paymentId
+                ? "처리 중..."
+                : "강제 완료"}
             </Button>
-          )
+          );
         },
       },
-    ]
-  }, [actions, state.forceCompletingPaymentId])
+    ];
+  }, [actions, state.forceCompletingPaymentId]);
 
   return (
-    <AdminSectionCard title="Payment 조회 및 강제 완료" contentClassName="space-y-4">
+    <AdminSectionCard
+      title="Payment 조회 및 강제 완료"
+      contentClassName="space-y-4"
+    >
       <AdminFilterBar className="md:grid-cols-6">
-        <Select value={state.yearSemester} onValueChange={actions.setYearSemester}>
+        <Select
+          value={state.yearSemester}
+          onValueChange={actions.setYearSemester}
+        >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -122,7 +138,12 @@ export const PaymentManagementSection: React.FC<PaymentManagementSectionProps> =
           </SelectContent>
         </Select>
 
-        <Select value={state.status} onValueChange={(value) => actions.setStatus(value as PaymentStatusFilter)}>
+        <Select
+          value={state.status}
+          onValueChange={(value) =>
+            actions.setStatus(value as PaymentStatusFilter)
+          }
+        >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -139,7 +160,10 @@ export const PaymentManagementSection: React.FC<PaymentManagementSectionProps> =
           placeholder="회원명/학번"
         />
         <div className="md:col-span-2" />
-        <Button onClick={() => void actions.search()} disabled={state.isLoading}>
+        <Button
+          onClick={() => void actions.search()}
+          disabled={state.isLoading}
+        >
           조회
         </Button>
       </AdminFilterBar>
@@ -159,5 +183,5 @@ export const PaymentManagementSection: React.FC<PaymentManagementSectionProps> =
         getRowId={(row) => String(row.paymentId)}
       />
     </AdminSectionCard>
-  )
-}
+  );
+};

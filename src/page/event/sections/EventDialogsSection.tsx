@@ -1,28 +1,28 @@
-import type { Dispatch, FormEvent, SetStateAction } from "react"
+import type { Dispatch, FormEvent, SetStateAction } from "react";
 
-import QRScannerComponent from "@/components/QRScanner"
-import { Button } from "@/components/ui/button"
+import QRScannerComponent from "@/components/QRScanner";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface EventDialogsSectionProps {
-  showEditDialog: boolean
-  onShowEditDialogChange: Dispatch<SetStateAction<boolean>>
-  editingActivityId: number | null
-  eventName: string
-  onEventNameChange: Dispatch<SetStateAction<string>>
-  pointAmount: string
-  onPointAmountChange: Dispatch<SetStateAction<string>>
-  onSubmitEvent: (event: FormEvent<HTMLFormElement>) => Promise<void>
-  qrActivityId: number | null
-  onCloseQR: () => void
+  showEditDialog: boolean;
+  onShowEditDialogChange: Dispatch<SetStateAction<boolean>>;
+  editingActivityId: number | null;
+  eventName: string;
+  onEventNameChange: Dispatch<SetStateAction<string>>;
+  pointAmount: string;
+  onPointAmountChange: Dispatch<SetStateAction<string>>;
+  onSubmitEvent: (event: FormEvent<HTMLFormElement>) => Promise<void>;
+  qrActivityId: number | null;
+  onCloseQR: () => void;
 }
 
 export const EventDialogsSection = ({
@@ -42,7 +42,9 @@ export const EventDialogsSection = ({
       <Dialog open={showEditDialog} onOpenChange={onShowEditDialogChange}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingActivityId ? "행사 수정" : "행사 생성"}</DialogTitle>
+            <DialogTitle>
+              {editingActivityId ? "행사 수정" : "행사 생성"}
+            </DialogTitle>
             <DialogDescription>
               {editingActivityId
                 ? "수정하고 싶은 행사 정보를 입력해주세요."
@@ -75,24 +77,37 @@ export const EventDialogsSection = ({
             </div>
 
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => onShowEditDialogChange(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onShowEditDialogChange(false)}
+              >
                 취소
               </Button>
-              <Button type="submit">{editingActivityId ? "수정하기" : "생성하기"}</Button>
+              <Button type="submit">
+                {editingActivityId ? "수정하기" : "생성하기"}
+              </Button>
             </div>
           </form>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={qrActivityId !== null} onOpenChange={(open) => !open && onCloseQR()}>
+      <Dialog
+        open={qrActivityId !== null}
+        onOpenChange={(open) => !open && onCloseQR()}
+      >
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>QR 코드 스캔</DialogTitle>
-            <DialogDescription>활동 ID {qrActivityId ?? "-"} 출석 체크를 진행합니다.</DialogDescription>
+            <DialogDescription>
+              활동 ID {qrActivityId ?? "-"} 출석 체크를 진행합니다.
+            </DialogDescription>
           </DialogHeader>
-          {qrActivityId !== null && <QRScannerComponent activityId={qrActivityId} onClose={onCloseQR} />}
+          {qrActivityId !== null && (
+            <QRScannerComponent activityId={qrActivityId} onClose={onCloseQR} />
+          )}
         </DialogContent>
       </Dialog>
     </>
-  )
-}
+  );
+};

@@ -1,7 +1,11 @@
-import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
-import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table"
+import {
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -9,10 +13,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
-import type { AdminColumnMeta, AdminDataTableProps } from "./types"
+import type { AdminColumnMeta, AdminDataTableProps } from "./types";
 
 export function AdminDataTable<TData>({
   columns,
@@ -31,7 +35,7 @@ export function AdminDataTable<TData>({
   rowClassName,
   meta,
 }: AdminDataTableProps<TData>) {
-  const safePageCount = Math.max(pageCount, 1)
+  const safePageCount = Math.max(pageCount, 1);
 
   const table = useReactTable({
     data,
@@ -49,10 +53,10 @@ export function AdminDataTable<TData>({
     pageCount: safePageCount,
     getRowId,
     meta,
-  })
+  });
 
-  const rows = table.getRowModel().rows
-  const columnCount = table.getVisibleLeafColumns().length
+  const rows = table.getRowModel().rows;
+  const columnCount = table.getVisibleLeafColumns().length;
 
   return (
     <div className="space-y-3">
@@ -62,30 +66,49 @@ export function AdminDataTable<TData>({
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
-                  const columnMeta = header.column.columnDef.meta as AdminColumnMeta | undefined
+                  const columnMeta = header.column.columnDef.meta as
+                    | AdminColumnMeta
+                    | undefined;
 
                   return (
-                    <TableHead key={header.id} className={columnMeta?.headerClassName}>
+                    <TableHead
+                      key={header.id}
+                      className={columnMeta?.headerClassName}
+                    >
                       {header.isPlaceholder ? null : header.column.getCanSort() ? (
                         <Button
                           variant="ghost"
                           size="sm"
                           className={cn(
                             "h-8 px-2 font-medium",
-                            columnMeta?.headerClassName?.includes("text-right") && "ml-auto flex",
+                            columnMeta?.headerClassName?.includes(
+                              "text-right"
+                            ) && "ml-auto flex"
                           )}
                           onClick={() => header.column.toggleSorting()}
                         >
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                          {header.column.getIsSorted() === "asc" && <ArrowUp className="ml-2 size-4" />}
-                          {header.column.getIsSorted() === "desc" && <ArrowDown className="ml-2 size-4" />}
-                          {header.column.getIsSorted() === false && <ArrowUpDown className="ml-2 size-4" />}
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                          {header.column.getIsSorted() === "asc" && (
+                            <ArrowUp className="ml-2 size-4" />
+                          )}
+                          {header.column.getIsSorted() === "desc" && (
+                            <ArrowDown className="ml-2 size-4" />
+                          )}
+                          {header.column.getIsSorted() === false && (
+                            <ArrowUpDown className="ml-2 size-4" />
+                          )}
                         </Button>
                       ) : (
-                        flexRender(header.column.columnDef.header, header.getContext())
+                        flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )
                       )}
                     </TableHead>
-                  )
+                  );
                 })}
               </TableRow>
             ))}
@@ -94,7 +117,10 @@ export function AdminDataTable<TData>({
           <TableBody>
             {rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columnCount} className="h-16 text-center text-muted-foreground">
+                <TableCell
+                  colSpan={columnCount}
+                  className="h-16 text-center text-muted-foreground"
+                >
                   {isLoading ? loadingMessage : emptyMessage}
                 </TableCell>
               </TableRow>
@@ -102,17 +128,28 @@ export function AdminDataTable<TData>({
               rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className={cn(onRowClick && "cursor-pointer", rowClassName?.(row.original))}
+                  className={cn(
+                    onRowClick && "cursor-pointer",
+                    rowClassName?.(row.original)
+                  )}
                   onClick={() => onRowClick?.(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => {
-                    const columnMeta = cell.column.columnDef.meta as AdminColumnMeta | undefined
+                    const columnMeta = cell.column.columnDef.meta as
+                      | AdminColumnMeta
+                      | undefined;
 
                     return (
-                      <TableCell key={cell.id} className={columnMeta?.cellClassName}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      <TableCell
+                        key={cell.id}
+                        className={columnMeta?.cellClassName}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
                       </TableCell>
-                    )
+                    );
                   })}
                 </TableRow>
               ))
@@ -146,5 +183,5 @@ export function AdminDataTable<TData>({
         </div>
       </div>
     </div>
-  )
+  );
 }
