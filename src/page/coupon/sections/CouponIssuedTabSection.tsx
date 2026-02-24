@@ -1,7 +1,14 @@
-import { useMemo, useState } from "react"
+import { useMemo } from "react"
 
-import type { AdminCoupon, AdminIssuedCoupon, AdminMemberSummary } from "@/api/coupon/types"
-import { AdminSortableTableHead } from "@/components/admin"
+import type { ColumnDef, PaginationState, SortingState, Updater } from "@tanstack/react-table"
+
+import type {
+  AdminCoupon,
+  AdminIssuedCoupon,
+  AdminIssuedCouponPageResponse,
+  AdminMemberSummary,
+} from "@/api/coupon/types"
+import { AdminDataTable } from "@/components/admin"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -9,21 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface CouponIssuedTabSectionProps {
   coupons: AdminCoupon[]
@@ -41,9 +34,14 @@ interface CouponIssuedTabSectionProps {
   onClearFilteredMembers: () => void
   onClearAllSelectedMembers: () => void
   onToggleMemberForIssue: (memberId: number) => void
-  filteredIssuedCoupons: AdminIssuedCoupon[]
+  issuedCouponPage: AdminIssuedCouponPageResponse | null
   onDeleteIssuedCoupon: (issuedCouponId: number) => Promise<void>
   formatDateTime: (value: string | null) => string
+  sorting: SortingState
+  onSortingChange: (updater: Updater<SortingState>) => void
+  pagination: PaginationState
+  onPaginationChange: (updater: Updater<PaginationState>) => void
+  isLoading: boolean
 }
 
 export const CouponIssuedTabSection: React.FC<CouponIssuedTabSectionProps> = ({
@@ -62,34 +60,84 @@ export const CouponIssuedTabSection: React.FC<CouponIssuedTabSectionProps> = ({
   onClearFilteredMembers,
   onClearAllSelectedMembers,
   onToggleMemberForIssue,
-  filteredIssuedCoupons,
+  issuedCouponPage,
   onDeleteIssuedCoupon,
   formatDateTime,
+  sorting,
+  onSortingChange,
+  pagination,
+  onPaginationChange,
+  isLoading,
 }) => {
-  const [sort, setSort] = useState<
-    "id,asc" | "id,desc" | "coupon,asc" | "coupon,desc" | "member,asc" | "member,desc" | "usedAt,asc" | "usedAt,desc"
-  >("id,asc")
-
-  const sortedIssuedCoupons = useMemo(() => {
-    const [sortKey, direction] = sort.split(",") as ["id" | "coupon" | "member" | "usedAt", "asc" | "desc"]
-    const sorted = [...filteredIssuedCoupons].sort((left, right) => {
-      if (sortKey === "id") {
-        return left.issuedCouponId - right.issuedCouponId
-      }
-      if (sortKey === "coupon") {
-        return left.couponName.localeCompare(right.couponName, "ko")
-      }
-      if (sortKey === "member") {
-        return left.memberName.localeCompare(right.memberName, "ko")
-      }
-
-      const leftValue = left.usedAt ? new Date(left.usedAt).getTime() : Number.POSITIVE_INFINITY
-      const rightValue = right.usedAt ? new Date(right.usedAt).getTime() : Number.POSITIVE_INFINITY
-      return leftValue - rightValue
-    })
-
-    return direction === "asc" ? sorted : sorted.reverse()
-  }, [filteredIssuedCoupons, sort])
+  const columns = useMemo<ColumnDef<AdminIssuedCoupon>[]>(() => {
+    return [
+      {
+        id: "id",
+        accessorKey: "issuedCouponId",
+        header: "발급 ID",
+        enableSorting: true,
+      },
+      {
+        id: "coupon",
+        accessorKey: "couponName",
+        header: "쿠폰",
+        enableSorting: true,
+        cell: ({ row }) =>
+          `[${row.original.couponId}] ${row.original.couponName} (${Number(row.original.discountAmount).toLocaleString("ko-KR")}원)`,
+      },
+      {
+        id: "member",
+        accessorKey: "memberName",
+        header: "회원",
+        enableSorting: true,
+        cell: ({ row }) => (
+          <div className="text-sm">
+            <div>
+              [{row.original.memberId}] {row.original.memberName}
+            </div>
+            <div className="text-muted-foreground">{row.original.memberEmail}</div>
+          </div>
+        ),
+      },
+      {
+        id: "status",
+        header: "상태",
+        cell: ({ row }) => (row.original.isValid ? "미사용" : "사용됨"),
+      },
+      {
+        id: "paymentId",
+        accessorKey: "paymentId",
+        header: "결제 ID",
+        cell: ({ row }) => row.original.paymentId ?? "-",
+      },
+      {
+        id: "usedAt",
+        accessorKey: "usedAt",
+        header: "사용 시각",
+        enableSorting: true,
+        sortDescFirst: true,
+        cell: ({ row }) => formatDateTime(row.original.usedAt),
+      },
+      {
+        id: "delete",
+        header: "삭제",
+        meta: {
+          headerClassName: "text-right",
+          cellClassName: "text-right",
+        },
+        cell: ({ row }) => (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => void onDeleteIssuedCoupon(row.original.issuedCouponId)}
+            disabled={!row.original.isValid}
+          >
+            삭제
+          </Button>
+        ),
+      },
+    ]
+  }, [formatDateTime, onDeleteIssuedCoupon])
 
   return (
     <>
@@ -186,68 +234,20 @@ export const CouponIssuedTabSection: React.FC<CouponIssuedTabSectionProps> = ({
 
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <AdminSortableTableHead title="발급 ID" sortKey="id" sort={sort} onSortChange={(nextSort) => setSort(nextSort as typeof sort)} />
-                  <AdminSortableTableHead
-                    title="쿠폰"
-                    sortKey="coupon"
-                    sort={sort}
-                    onSortChange={(nextSort) => setSort(nextSort as typeof sort)}
-                  />
-                  <AdminSortableTableHead
-                    title="회원"
-                    sortKey="member"
-                    sort={sort}
-                    onSortChange={(nextSort) => setSort(nextSort as typeof sort)}
-                  />
-                  <TableHead>상태</TableHead>
-                  <TableHead>결제 ID</TableHead>
-                  <AdminSortableTableHead
-                    title="사용 시각"
-                    sortKey="usedAt"
-                    sort={sort}
-                    onSortChange={(nextSort) => setSort(nextSort as typeof sort)}
-                    defaultDirection="desc"
-                  />
-                  <TableHead className="text-right">삭제</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedIssuedCoupons.map((issuedCoupon) => (
-                  <TableRow key={issuedCoupon.issuedCouponId}>
-                    <TableCell>{issuedCoupon.issuedCouponId}</TableCell>
-                    <TableCell>
-                      [{issuedCoupon.couponId}] {issuedCoupon.couponName} ({Number(issuedCoupon.discountAmount).toLocaleString("ko-KR")}원)
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <div>
-                          [{issuedCoupon.memberId}] {issuedCoupon.memberName}
-                        </div>
-                        <div className="text-muted-foreground">{issuedCoupon.memberEmail}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{issuedCoupon.isValid ? "미사용" : "사용됨"}</TableCell>
-                    <TableCell>{issuedCoupon.paymentId ?? "-"}</TableCell>
-                    <TableCell>{formatDateTime(issuedCoupon.usedAt)}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => void onDeleteIssuedCoupon(issuedCoupon.issuedCouponId)}
-                        disabled={!issuedCoupon.isValid}
-                      >
-                        삭제
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <AdminDataTable
+            columns={columns}
+            data={issuedCouponPage?.content ?? []}
+            sorting={sorting}
+            onSortingChange={onSortingChange}
+            pagination={pagination}
+            onPaginationChange={onPaginationChange}
+            pageCount={issuedCouponPage?.totalPages ?? 1}
+            totalElements={issuedCouponPage?.totalElements ?? 0}
+            isLoading={isLoading}
+            loadingMessage="발급 쿠폰 목록을 불러오는 중..."
+            emptyMessage="조회 결과가 없습니다."
+            getRowId={(row) => String(row.issuedCouponId)}
+          />
         </CardContent>
       </Card>
     </>

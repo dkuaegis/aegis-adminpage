@@ -1,57 +1,105 @@
+import { useMemo } from "react"
+
+import type { ColumnDef, PaginationState, SortingState, Updater } from "@tanstack/react-table"
+
 import type { AdminMemberRecordItem, AdminMemberRecordPage } from "@/api/member-management/types"
-import { AdminSortableTableHead } from "@/components/admin"
+import { AdminDataTable } from "@/components/admin"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-import type { MemberRoleFilter, SortFilter } from "../hooks/useMemberManagementPageState"
+import type { MemberRoleFilter, MemberSortPreset } from "../hooks/useMemberManagementPageState"
 
 interface MemberRecordsSectionProps {
   keywordInput: string
   roleFilter: MemberRoleFilter
-  sortFilter: SortFilter
+  sortPreset: MemberSortPreset
+  sorting: SortingState
+  recordPagination: PaginationState
   recordPage: AdminMemberRecordPage | null
   isRecordLoading: boolean
   selectedMemberId: number | null
   formatDateTime: (value: string | null) => string
   onKeywordInputChange: (value: string) => void
   onRoleFilterChange: (value: MemberRoleFilter) => void
-  onSortFilterChange: (value: SortFilter) => void
+  onSortPresetChange: (value: MemberSortPreset) => void
+  onSortingChange: (updater: Updater<SortingState>) => void
+  onPaginationChange: (updater: Updater<PaginationState>) => void
   onSearch: () => void
   onSelectMember: (record: AdminMemberRecordItem) => void
-  onMovePage: (nextPage: number) => void
 }
 
 export const MemberRecordsSection: React.FC<MemberRecordsSectionProps> = ({
   keywordInput,
   roleFilter,
-  sortFilter,
+  sortPreset,
+  sorting,
+  recordPagination,
   recordPage,
   isRecordLoading,
   selectedMemberId,
   formatDateTime,
   onKeywordInputChange,
   onRoleFilterChange,
-  onSortFilterChange,
+  onSortPresetChange,
+  onSortingChange,
+  onPaginationChange,
   onSearch,
   onSelectMember,
-  onMovePage,
 }) => {
+  const columns = useMemo<ColumnDef<AdminMemberRecordItem>[]>(() => {
+    return [
+      {
+        id: "id",
+        accessorKey: "snapshotStudentId",
+        header: "학번",
+        enableSorting: true,
+        cell: ({ row }) => row.original.snapshotStudentId ?? "-",
+      },
+      {
+        id: "name",
+        accessorKey: "snapshotName",
+        header: "이름",
+        enableSorting: true,
+      },
+      {
+        id: "email",
+        accessorKey: "snapshotEmail",
+        header: "이메일",
+        cell: ({ row }) => <div className="max-w-[220px] truncate">{row.original.snapshotEmail}</div>,
+      },
+      {
+        id: "role",
+        accessorKey: "snapshotRole",
+        header: "역할",
+      },
+      {
+        id: "department",
+        accessorKey: "snapshotDepartment",
+        header: "학과",
+        cell: ({ row }) => row.original.snapshotDepartment ?? "-",
+      },
+      {
+        id: "grade",
+        accessorKey: "snapshotGrade",
+        header: "학년",
+        cell: ({ row }) => row.original.snapshotGrade ?? "-",
+      },
+      {
+        id: "recordSource",
+        accessorKey: "recordSource",
+        header: "기록 출처",
+      },
+      {
+        id: "paymentCompletedAt",
+        accessorKey: "paymentCompletedAt",
+        header: "결제 완료 시각",
+        cell: ({ row }) => formatDateTime(row.original.paymentCompletedAt),
+      },
+    ]
+  }, [formatDateTime])
+
   return (
     <Card>
       <CardContent className="space-y-4 p-5">
@@ -80,7 +128,7 @@ export const MemberRecordsSection: React.FC<MemberRecordsSectionProps> = ({
             </SelectContent>
           </Select>
 
-          <Select value={sortFilter} onValueChange={(value) => onSortFilterChange(value as SortFilter)}>
+          <Select value={sortPreset} onValueChange={(value) => onSortPresetChange(value as MemberSortPreset)}>
             <SelectTrigger className="w-[190px]">
               <SelectValue />
             </SelectTrigger>
@@ -95,96 +143,22 @@ export const MemberRecordsSection: React.FC<MemberRecordsSectionProps> = ({
           <Button onClick={onSearch}>검색</Button>
         </div>
 
-        <div className="overflow-x-auto rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <AdminSortableTableHead
-                  title="학번"
-                  sortKey="id"
-                  sort={sortFilter}
-                  onSortChange={(value) => onSortFilterChange(value as SortFilter)}
-                />
-                <AdminSortableTableHead
-                  title="이름"
-                  sortKey="name"
-                  sort={sortFilter}
-                  onSortChange={(value) => onSortFilterChange(value as SortFilter)}
-                />
-                <TableHead>이메일</TableHead>
-                <TableHead>역할</TableHead>
-                <TableHead>학과</TableHead>
-                <TableHead>학년</TableHead>
-                <TableHead>기록 출처</TableHead>
-                <TableHead>결제 완료 시각</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {!isRecordLoading && (recordPage?.content.length ?? 0) === 0 && (
-                <TableRow>
-                  <TableCell className="h-16 text-center text-muted-foreground" colSpan={8}>
-                    조회 결과가 없습니다.
-                  </TableCell>
-                </TableRow>
-              )}
-
-              {isRecordLoading && (
-                <TableRow>
-                  <TableCell className="h-16 text-center text-muted-foreground" colSpan={8}>
-                    회원 기록을 조회하는 중입니다.
-                  </TableCell>
-                </TableRow>
-              )}
-
-              {!isRecordLoading &&
-                recordPage?.content.map((record) => {
-                  const isSelected = selectedMemberId === record.memberRecordId
-
-                  return (
-                    <TableRow
-                      key={record.memberRecordId}
-                      className={isSelected ? "bg-accent" : "cursor-pointer"}
-                      onClick={() => onSelectMember(record)}
-                    >
-                      <TableCell>{record.snapshotStudentId ?? "-"}</TableCell>
-                      <TableCell>{record.snapshotName}</TableCell>
-                      <TableCell className="max-w-[220px] truncate">{record.snapshotEmail}</TableCell>
-                      <TableCell>{record.snapshotRole}</TableCell>
-                      <TableCell>{record.snapshotDepartment ?? "-"}</TableCell>
-                      <TableCell>{record.snapshotGrade ?? "-"}</TableCell>
-                      <TableCell>{record.recordSource}</TableCell>
-                      <TableCell>{formatDateTime(record.paymentCompletedAt)}</TableCell>
-                    </TableRow>
-                  )
-                })}
-            </TableBody>
-          </Table>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-          <span className="text-muted-foreground">
-            총 {recordPage?.totalElements ?? 0}건, 페이지 {recordPage ? recordPage.page + 1 : 1} / {recordPage?.totalPages ?? 1}
-          </span>
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={(recordPage?.page ?? 0) <= 0}
-              onClick={() => onMovePage((recordPage?.page ?? 0) - 1)}
-            >
-              이전
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!(recordPage?.hasNext ?? false)}
-              onClick={() => onMovePage((recordPage?.page ?? 0) + 1)}
-            >
-              다음
-            </Button>
-          </div>
-        </div>
+        <AdminDataTable
+          columns={columns}
+          data={recordPage?.content ?? []}
+          sorting={sorting}
+          onSortingChange={onSortingChange}
+          pagination={recordPagination}
+          onPaginationChange={onPaginationChange}
+          pageCount={recordPage?.totalPages ?? 1}
+          totalElements={recordPage?.totalElements ?? 0}
+          isLoading={isRecordLoading}
+          loadingMessage="회원 기록을 조회하는 중입니다."
+          emptyMessage="조회 결과가 없습니다."
+          getRowId={(row) => String(row.memberRecordId)}
+          onRowClick={onSelectMember}
+          rowClassName={(row) => (selectedMemberId === row.memberRecordId ? "bg-accent" : undefined)}
+        />
       </CardContent>
     </Card>
   )

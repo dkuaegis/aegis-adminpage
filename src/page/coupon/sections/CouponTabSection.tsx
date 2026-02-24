@@ -1,19 +1,13 @@
-import { useMemo, useState } from "react"
+import { useMemo } from "react"
 
-import type { AdminCoupon } from "@/api/coupon/types"
-import { AdminSortableTableHead } from "@/components/admin"
+import type { ColumnDef, PaginationState, SortingState, Updater } from "@tanstack/react-table"
+
+import type { AdminCoupon, AdminCouponPageResponse } from "@/api/coupon/types"
+import { AdminDataTable } from "@/components/admin"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 
 interface CouponTabSectionProps {
   newCouponName: string
@@ -21,11 +15,16 @@ interface CouponTabSectionProps {
   newDiscountAmount: string
   onNewDiscountAmountChange: (value: string) => void
   onCreateCoupon: () => Promise<void>
-  filteredCoupons: AdminCoupon[]
+  couponPage: AdminCouponPageResponse | null
   couponNameDrafts: Record<number, string>
   onCouponNameDraftChange: (couponId: number, value: string) => void
   onUpdateCouponName: (couponId: number) => Promise<void>
   onDeleteCoupon: (couponId: number) => Promise<void>
+  sorting: SortingState
+  onSortingChange: (updater: Updater<SortingState>) => void
+  pagination: PaginationState
+  onPaginationChange: (updater: Updater<PaginationState>) => void
+  isLoading: boolean
 }
 
 export const CouponTabSection: React.FC<CouponTabSectionProps> = ({
@@ -34,30 +33,75 @@ export const CouponTabSection: React.FC<CouponTabSectionProps> = ({
   newDiscountAmount,
   onNewDiscountAmountChange,
   onCreateCoupon,
-  filteredCoupons,
+  couponPage,
   couponNameDrafts,
   onCouponNameDraftChange,
   onUpdateCouponName,
   onDeleteCoupon,
+  sorting,
+  onSortingChange,
+  pagination,
+  onPaginationChange,
+  isLoading,
 }) => {
-  const [sort, setSort] = useState<"id,asc" | "id,desc" | "name,asc" | "name,desc" | "discount,asc" | "discount,desc">(
-    "id,asc",
-  )
-
-  const sortedCoupons = useMemo(() => {
-    const [sortKey, direction] = sort.split(",") as ["id" | "name" | "discount", "asc" | "desc"]
-    const sorted = [...filteredCoupons].sort((left, right) => {
-      if (sortKey === "id") {
-        return left.couponId - right.couponId
-      }
-      if (sortKey === "name") {
-        return left.couponName.localeCompare(right.couponName, "ko")
-      }
-      return Number(left.discountAmount) - Number(right.discountAmount)
-    })
-
-    return direction === "asc" ? sorted : sorted.reverse()
-  }, [filteredCoupons, sort])
+  const columns = useMemo<ColumnDef<AdminCoupon>[]>(() => {
+    return [
+      {
+        id: "id",
+        accessorKey: "couponId",
+        header: "ID",
+        enableSorting: true,
+      },
+      {
+        id: "name",
+        accessorKey: "couponName",
+        header: "쿠폰 이름",
+        enableSorting: true,
+      },
+      {
+        id: "discount",
+        accessorKey: "discountAmount",
+        header: "할인 금액",
+        enableSorting: true,
+        meta: {
+          headerClassName: "text-right",
+          cellClassName: "text-right",
+        },
+        cell: ({ row }) => `${Number(row.original.discountAmount).toLocaleString("ko-KR")}원`,
+      },
+      {
+        id: "rename",
+        header: "이름 수정",
+        meta: {
+          headerClassName: "w-[280px]",
+        },
+        cell: ({ row }) => (
+          <div className="flex gap-2">
+            <Input
+              value={couponNameDrafts[row.original.couponId] ?? row.original.couponName}
+              onChange={(event) => onCouponNameDraftChange(row.original.couponId, event.target.value)}
+            />
+            <Button variant="outline" onClick={() => void onUpdateCouponName(row.original.couponId)}>
+              저장
+            </Button>
+          </div>
+        ),
+      },
+      {
+        id: "delete",
+        header: "삭제",
+        meta: {
+          headerClassName: "w-28 text-right",
+          cellClassName: "text-right",
+        },
+        cell: ({ row }) => (
+          <Button variant="destructive" size="sm" onClick={() => void onDeleteCoupon(row.original.couponId)}>
+            삭제
+          </Button>
+        ),
+      },
+    ]
+  }, [couponNameDrafts, onCouponNameDraftChange, onDeleteCoupon, onUpdateCouponName])
 
   return (
     <>
@@ -86,56 +130,20 @@ export const CouponTabSection: React.FC<CouponTabSectionProps> = ({
 
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <AdminSortableTableHead title="ID" sortKey="id" sort={sort} onSortChange={(nextSort) => setSort(nextSort as typeof sort)} />
-                  <AdminSortableTableHead title="쿠폰 이름" sortKey="name" sort={sort} onSortChange={(nextSort) => setSort(nextSort as typeof sort)} />
-                  <AdminSortableTableHead
-                    title="할인 금액"
-                    sortKey="discount"
-                    sort={sort}
-                    onSortChange={(nextSort) => setSort(nextSort as typeof sort)}
-                    className="text-right"
-                  />
-                  <TableHead className="w-[280px]">이름 수정</TableHead>
-                  <TableHead className="w-28 text-right">삭제</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedCoupons.map((coupon) => (
-                  <TableRow key={coupon.couponId}>
-                    <TableCell>{coupon.couponId}</TableCell>
-                    <TableCell>{coupon.couponName}</TableCell>
-                    <TableCell className="text-right">
-                      {Number(coupon.discountAmount).toLocaleString("ko-KR")}원
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Input
-                          value={couponNameDrafts[coupon.couponId] ?? coupon.couponName}
-                          onChange={(event) => onCouponNameDraftChange(coupon.couponId, event.target.value)}
-                        />
-                        <Button variant="outline" onClick={() => void onUpdateCouponName(coupon.couponId)}>
-                          저장
-                        </Button>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => void onDeleteCoupon(coupon.couponId)}
-                      >
-                        삭제
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <AdminDataTable
+            columns={columns}
+            data={couponPage?.content ?? []}
+            sorting={sorting}
+            onSortingChange={onSortingChange}
+            pagination={pagination}
+            onPaginationChange={onPaginationChange}
+            pageCount={couponPage?.totalPages ?? 1}
+            totalElements={couponPage?.totalElements ?? 0}
+            isLoading={isLoading}
+            loadingMessage="쿠폰 목록을 불러오는 중..."
+            emptyMessage="조회 결과가 없습니다."
+            getRowId={(row) => String(row.couponId)}
+          />
         </CardContent>
       </Card>
     </>

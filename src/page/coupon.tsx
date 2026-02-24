@@ -1,4 +1,3 @@
-import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { formatDateTime, useCouponPageState } from "@/page/coupon/hooks/useCouponPageState"
 import { CouponCodeTabSection } from "@/page/coupon/sections/CouponCodeTabSection"
@@ -11,7 +10,13 @@ const CouponPage: React.FC = () => {
 
   return (
     <div className="space-y-5">
-      <CouponPageHeader searchText={state.searchText} onSearchTextChange={state.setSearchText} />
+      <CouponPageHeader
+        searchDraft={state.searchDraft}
+        appliedKeyword={state.appliedKeyword}
+        isLoading={state.isDataLoading}
+        onSearchDraftChange={state.setSearchDraft}
+        onApplySearch={state.handleApplySearch}
+      />
 
       <Tabs value={state.tab} onValueChange={(value) => state.setTab(value as typeof state.tab)}>
         <TabsList>
@@ -27,11 +32,16 @@ const CouponPage: React.FC = () => {
             newDiscountAmount={state.newDiscountAmount}
             onNewDiscountAmountChange={state.setNewDiscountAmount}
             onCreateCoupon={state.handleCreateCoupon}
-            filteredCoupons={state.filteredCoupons}
+            couponPage={state.couponPage}
             couponNameDrafts={state.couponNameDrafts}
             onCouponNameDraftChange={state.handleCouponNameDraftChange}
             onUpdateCouponName={state.handleUpdateCouponName}
             onDeleteCoupon={state.handleDeleteCoupon}
+            sorting={state.couponSorting}
+            onSortingChange={state.handleCouponSortingChange}
+            pagination={state.couponPagination}
+            onPaginationChange={state.handleCouponPaginationChange}
+            isLoading={state.isDataLoading}
           />
         </TabsContent>
 
@@ -43,9 +53,14 @@ const CouponPage: React.FC = () => {
             newCouponCodeDescription={state.newCouponCodeDescription}
             onNewCouponCodeDescriptionChange={state.setNewCouponCodeDescription}
             onCreateCouponCode={state.handleCreateCouponCode}
-            filteredCouponCodes={state.filteredCouponCodes}
+            couponCodePage={state.couponCodePage}
             onDeleteCouponCode={state.handleDeleteCouponCode}
             formatDateTime={formatDateTime}
+            sorting={state.couponCodeSorting}
+            onSortingChange={state.handleCouponCodeSortingChange}
+            pagination={state.couponCodePagination}
+            onPaginationChange={state.handleCouponCodePaginationChange}
+            isLoading={state.isDataLoading}
           />
         </TabsContent>
 
@@ -66,24 +81,17 @@ const CouponPage: React.FC = () => {
             onClearFilteredMembers={state.handleClearFilteredMembers}
             onClearAllSelectedMembers={state.handleClearAllSelectedMembers}
             onToggleMemberForIssue={state.handleToggleMemberForIssue}
-            filteredIssuedCoupons={state.filteredIssuedCoupons}
+            issuedCouponPage={state.issuedCouponPage}
             onDeleteIssuedCoupon={state.handleDeleteIssuedCoupon}
             formatDateTime={formatDateTime}
+            sorting={state.issuedSorting}
+            onSortingChange={state.handleIssuedSortingChange}
+            pagination={state.issuedPagination}
+            onPaginationChange={state.handleIssuedPaginationChange}
+            isLoading={state.isDataLoading}
           />
         </TabsContent>
       </Tabs>
-
-      {state.isDataLoading && (
-        <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">데이터를 불러오는 중입니다.</CardContent>
-        </Card>
-      )}
-
-      {!state.isDataLoading && state.currentRows.length === 0 && (
-        <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">조건에 맞는 데이터가 없습니다.</CardContent>
-        </Card>
-      )}
     </div>
   )
 }

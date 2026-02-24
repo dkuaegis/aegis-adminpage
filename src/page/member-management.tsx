@@ -31,17 +31,20 @@ const MemberManagementPage: React.FC = () => {
         <MemberRecordsSection
           keywordInput={state.keywordInput}
           roleFilter={state.roleFilter}
-          sortFilter={state.sortFilter}
+          sortPreset={state.sortPreset}
+          sorting={state.sorting}
+          recordPagination={state.recordPagination}
           recordPage={state.recordPage}
           isRecordLoading={state.isRecordLoading}
           selectedMemberId={state.selectedMember?.memberRecordId ?? null}
           formatDateTime={formatDateTime}
           onKeywordInputChange={state.handleKeywordInputChange}
           onRoleFilterChange={state.handleRoleFilterChange}
-          onSortFilterChange={state.handleSortFilterChange}
+          onSortPresetChange={state.handleSortPresetChange}
+          onSortingChange={state.handleSortingChange}
+          onPaginationChange={state.handlePaginationChange}
           onSearch={state.handleSearch}
           onSelectMember={state.handleSelectMember}
-          onMovePage={state.movePage}
         />
 
         <MemberDetailSection

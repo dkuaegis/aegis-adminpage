@@ -1,30 +1,15 @@
-import {
-  AdminFilterBar,
-  AdminSectionCard,
-  AdminSortableTableHead,
-  AdminTableEmptyRow,
-} from "@/components/admin"
+import { useMemo } from "react"
+
+import type { ColumnDef } from "@tanstack/react-table"
+
+import type { AdminTransactionItem } from "@/api/payment/types"
+import { AdminDataTable, AdminFilterBar, AdminSectionCard } from "@/components/admin"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 import type {
   TransactionSectionActions,
-  TransactionSort,
   TransactionSectionState,
   TransactionTypeFilter,
   YearSemesterOption,
@@ -49,6 +34,62 @@ export const TransactionManagementSection: React.FC<TransactionManagementSection
   state,
   actions,
 }) => {
+  const columns = useMemo<ColumnDef<AdminTransactionItem>[]>(() => {
+    return [
+      {
+        id: "transactionTime",
+        accessorKey: "transactionTime",
+        header: "시간",
+        enableSorting: true,
+        sortDescFirst: true,
+        cell: ({ row }) => formatDateTime(row.original.transactionTime),
+      },
+      {
+        id: "id",
+        accessorKey: "transactionId",
+        header: "ID",
+        enableSorting: true,
+      },
+      {
+        id: "yearSemester",
+        accessorKey: "yearSemester",
+        header: "학기",
+      },
+      {
+        id: "depositorName",
+        accessorKey: "depositorName",
+        header: "입금자",
+        enableSorting: true,
+      },
+      {
+        id: "transactionType",
+        accessorKey: "transactionType",
+        header: "유형",
+        cell: ({ row }) => (row.original.transactionType === "DEPOSIT" ? "입금" : "출금"),
+      },
+      {
+        id: "amount",
+        accessorKey: "amount",
+        header: "금액",
+        enableSorting: true,
+        meta: {
+          headerClassName: "text-right",
+          cellClassName: "text-right",
+        },
+      },
+      {
+        id: "balance",
+        accessorKey: "balance",
+        header: "잔액",
+        enableSorting: true,
+        meta: {
+          headerClassName: "text-right",
+          cellClassName: "text-right",
+        },
+      },
+    ]
+  }, [])
+
   return (
     <AdminSectionCard title="Transaction 조회" contentClassName="space-y-4">
       <AdminFilterBar className="md:grid-cols-7">
@@ -66,10 +107,7 @@ export const TransactionManagementSection: React.FC<TransactionManagementSection
           </SelectContent>
         </Select>
 
-        <Select
-          value={state.type}
-          onValueChange={(value) => actions.setType(value as TransactionTypeFilter)}
-        >
+        <Select value={state.type} onValueChange={(value) => actions.setType(value as TransactionTypeFilter)}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -94,94 +132,20 @@ export const TransactionManagementSection: React.FC<TransactionManagementSection
         </div>
       </AdminFilterBar>
 
-      <div className="overflow-x-auto rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <AdminSortableTableHead
-                title="시간"
-                sortKey="transactionTime"
-                sort={state.sort}
-                onSortChange={(nextSort) => void actions.setSort(nextSort as TransactionSort)}
-              />
-              <AdminSortableTableHead
-                title="ID"
-                sortKey="id"
-                sort={state.sort}
-                onSortChange={(nextSort) => void actions.setSort(nextSort as TransactionSort)}
-              />
-              <TableHead>학기</TableHead>
-              <AdminSortableTableHead
-                title="입금자"
-                sortKey="depositorName"
-                sort={state.sort}
-                onSortChange={(nextSort) => void actions.setSort(nextSort as TransactionSort)}
-              />
-              <TableHead>유형</TableHead>
-              <AdminSortableTableHead
-                title="금액"
-                sortKey="amount"
-                sort={state.sort}
-                onSortChange={(nextSort) => void actions.setSort(nextSort as TransactionSort)}
-                className="text-right"
-              />
-              <AdminSortableTableHead
-                title="잔액"
-                sortKey="balance"
-                sort={state.sort}
-                onSortChange={(nextSort) => void actions.setSort(nextSort as TransactionSort)}
-                className="text-right"
-              />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {state.data?.content.map((transaction) => (
-              <TableRow key={transaction.transactionId}>
-                <TableCell>{formatDateTime(transaction.transactionTime)}</TableCell>
-                <TableCell>{transaction.transactionId}</TableCell>
-                <TableCell>{transaction.yearSemester}</TableCell>
-                <TableCell>{transaction.depositorName}</TableCell>
-                <TableCell>{transaction.transactionType === "DEPOSIT" ? "입금" : "출금"}</TableCell>
-                <TableCell className="text-right">{transaction.amount}</TableCell>
-                <TableCell className="text-right">{transaction.balance}</TableCell>
-              </TableRow>
-            ))}
-
-            {(state.data?.content.length ?? 0) === 0 && (
-              <AdminTableEmptyRow
-                colSpan={7}
-                isLoading={state.isLoading}
-                loadingMessage="거래 목록을 불러오는 중..."
-                emptyMessage="조회 결과가 없습니다."
-              />
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-        <span className="text-muted-foreground">
-          총 {state.data?.totalElements ?? 0}건 / {state.data ? state.data.page + 1 : 1}페이지
-        </span>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void actions.movePage(state.page - 1)}
-            disabled={state.isLoading || state.page <= 0}
-          >
-            이전
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void actions.movePage(state.page + 1)}
-            disabled={state.isLoading || !(state.data?.hasNext ?? false)}
-          >
-            다음
-          </Button>
-        </div>
-      </div>
+      <AdminDataTable
+        columns={columns}
+        data={state.data?.content ?? []}
+        sorting={state.sorting}
+        onSortingChange={actions.onSortingChange}
+        pagination={state.pagination}
+        onPaginationChange={actions.onPaginationChange}
+        pageCount={state.data?.totalPages ?? 1}
+        totalElements={state.data?.totalElements ?? 0}
+        isLoading={state.isLoading}
+        loadingMessage="거래 목록을 불러오는 중..."
+        emptyMessage="조회 결과가 없습니다."
+        getRowId={(row) => String(row.transactionId)}
+      />
     </AdminSectionCard>
   )
 }

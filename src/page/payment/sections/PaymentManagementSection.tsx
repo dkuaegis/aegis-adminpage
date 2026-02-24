@@ -1,30 +1,15 @@
-import {
-  AdminFilterBar,
-  AdminSectionCard,
-  AdminSortableTableHead,
-  AdminTableEmptyRow,
-} from "@/components/admin"
+import { useMemo } from "react"
+
+import type { ColumnDef } from "@tanstack/react-table"
+
+import type { AdminPaymentItem } from "@/api/payment/types"
+import { AdminDataTable, AdminFilterBar, AdminSectionCard } from "@/components/admin"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 import type {
   PaymentSectionActions,
-  PaymentSort,
   PaymentSectionState,
   PaymentStatusFilter,
   YearSemesterOption,
@@ -49,6 +34,77 @@ export const PaymentManagementSection: React.FC<PaymentManagementSectionProps> =
   state,
   actions,
 }) => {
+  const columns = useMemo<ColumnDef<AdminPaymentItem>[]>(() => {
+    return [
+      {
+        id: "id",
+        accessorKey: "paymentId",
+        header: "ID",
+        enableSorting: true,
+      },
+      {
+        id: "memberName",
+        accessorKey: "memberName",
+        header: "회원",
+        enableSorting: true,
+      },
+      {
+        id: "studentId",
+        accessorKey: "studentId",
+        header: "학번",
+        cell: ({ row }) => row.original.studentId ?? "-",
+      },
+      {
+        id: "yearSemester",
+        accessorKey: "yearSemester",
+        header: "학기",
+      },
+      {
+        id: "status",
+        accessorKey: "status",
+        header: "상태",
+        enableSorting: true,
+      },
+      {
+        id: "finalPrice",
+        accessorKey: "finalPrice",
+        header: "금액",
+        enableSorting: true,
+        meta: {
+          headerClassName: "text-right",
+          cellClassName: "text-right",
+        },
+      },
+      {
+        id: "createdAt",
+        accessorKey: "createdAt",
+        header: "생성일",
+        enableSorting: true,
+        cell: ({ row }) => formatDateTime(row.original.createdAt),
+      },
+      {
+        id: "actions",
+        header: "동작",
+        cell: ({ row }) => {
+          const payment = row.original
+
+          return (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void actions.forceComplete(payment.paymentId)}
+              disabled={
+                payment.status !== "PENDING" || state.forceCompletingPaymentId === payment.paymentId
+              }
+            >
+              {state.forceCompletingPaymentId === payment.paymentId ? "처리 중..." : "강제 완료"}
+            </Button>
+          )
+        },
+      },
+    ]
+  }, [actions, state.forceCompletingPaymentId])
+
   return (
     <AdminSectionCard title="Payment 조회 및 강제 완료" contentClassName="space-y-4">
       <AdminFilterBar className="md:grid-cols-6">
@@ -66,10 +122,7 @@ export const PaymentManagementSection: React.FC<PaymentManagementSectionProps> =
           </SelectContent>
         </Select>
 
-        <Select
-          value={state.status}
-          onValueChange={(value) => actions.setStatus(value as PaymentStatusFilter)}
-        >
+        <Select value={state.status} onValueChange={(value) => actions.setStatus(value as PaymentStatusFilter)}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -91,107 +144,20 @@ export const PaymentManagementSection: React.FC<PaymentManagementSectionProps> =
         </Button>
       </AdminFilterBar>
 
-      <div className="overflow-x-auto rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <AdminSortableTableHead
-                title="ID"
-                sortKey="id"
-                sort={state.sort}
-                onSortChange={(nextSort) => void actions.setSort(nextSort as PaymentSort)}
-              />
-              <AdminSortableTableHead
-                title="회원"
-                sortKey="memberName"
-                sort={state.sort}
-                onSortChange={(nextSort) => void actions.setSort(nextSort as PaymentSort)}
-              />
-              <TableHead>학번</TableHead>
-              <TableHead>학기</TableHead>
-              <AdminSortableTableHead
-                title="상태"
-                sortKey="status"
-                sort={state.sort}
-                onSortChange={(nextSort) => void actions.setSort(nextSort as PaymentSort)}
-              />
-              <AdminSortableTableHead
-                title="금액"
-                sortKey="finalPrice"
-                sort={state.sort}
-                onSortChange={(nextSort) => void actions.setSort(nextSort as PaymentSort)}
-                className="text-right"
-              />
-              <AdminSortableTableHead
-                title="생성일"
-                sortKey="createdAt"
-                sort={state.sort}
-                onSortChange={(nextSort) => void actions.setSort(nextSort as PaymentSort)}
-              />
-              <TableHead>동작</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {state.data?.content.map((payment) => (
-              <TableRow key={payment.paymentId}>
-                <TableCell>{payment.paymentId}</TableCell>
-                <TableCell>{payment.memberName}</TableCell>
-                <TableCell>{payment.studentId ?? "-"}</TableCell>
-                <TableCell>{payment.yearSemester}</TableCell>
-                <TableCell>{payment.status}</TableCell>
-                <TableCell className="text-right">{payment.finalPrice}</TableCell>
-                <TableCell>{formatDateTime(payment.createdAt)}</TableCell>
-                <TableCell>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => void actions.forceComplete(payment.paymentId)}
-                    disabled={
-                      payment.status !== "PENDING" ||
-                      state.forceCompletingPaymentId === payment.paymentId
-                    }
-                  >
-                    {state.forceCompletingPaymentId === payment.paymentId ? "처리 중..." : "강제 완료"}
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-
-            {(state.data?.content.length ?? 0) === 0 && (
-              <AdminTableEmptyRow
-                colSpan={8}
-                isLoading={state.isLoading}
-                loadingMessage="결제 목록을 불러오는 중..."
-                emptyMessage="조회 결과가 없습니다."
-              />
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-        <span className="text-muted-foreground">
-          총 {state.data?.totalElements ?? 0}건 / {state.data ? state.data.page + 1 : 1}페이지
-        </span>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void actions.movePage(state.page - 1)}
-            disabled={state.isLoading || state.page <= 0}
-          >
-            이전
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void actions.movePage(state.page + 1)}
-            disabled={state.isLoading || !(state.data?.hasNext ?? false)}
-          >
-            다음
-          </Button>
-        </div>
-      </div>
+      <AdminDataTable
+        columns={columns}
+        data={state.data?.content ?? []}
+        sorting={state.sorting}
+        onSortingChange={actions.onSortingChange}
+        pagination={state.pagination}
+        onPaginationChange={actions.onPaginationChange}
+        pageCount={state.data?.totalPages ?? 1}
+        totalElements={state.data?.totalElements ?? 0}
+        isLoading={state.isLoading}
+        loadingMessage="결제 목록을 불러오는 중..."
+        emptyMessage="조회 결과가 없습니다."
+        getRowId={(row) => String(row.paymentId)}
+      />
     </AdminSectionCard>
   )
 }
