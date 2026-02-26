@@ -4,7 +4,7 @@ import type {
   Updater,
 } from "@tanstack/react-table";
 import { functionalUpdate } from "@tanstack/react-table";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getAdminPayments } from "@/api/payment/get-admin-payments";
 import { getAdminTransactions } from "@/api/payment/get-admin-transactions";
 import { patchForceCompletePayment } from "@/api/payment/patch-force-complete-payment";
@@ -134,7 +134,7 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
   const [paymentStatus, setPaymentStatus] =
     useState<PaymentStatusFilter>("ALL");
   const [paymentSorting, setPaymentSorting] = useState<SortingState>(
-    DEFAULT_PAYMENT_SORTING
+    DEFAULT_PAYMENT_SORTING,
   );
   const [paymentMemberKeyword, setPaymentMemberKeyword] = useState("");
   const [forceCompletingPaymentId, setForceCompletingPaymentId] = useState<
@@ -154,12 +154,14 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
   const [transactionType, setTransactionType] =
     useState<TransactionTypeFilter>("ALL");
   const [transactionSorting, setTransactionSorting] = useState<SortingState>(
-    DEFAULT_TRANSACTION_SORTING
+    DEFAULT_TRANSACTION_SORTING,
   );
   const [transactionDepositorKeyword, setTransactionDepositorKeyword] =
     useState("");
   const [transactionFrom, setTransactionFrom] = useState("");
   const [transactionTo, setTransactionTo] = useState("");
+
+  const initializedRef = useRef(false);
 
   const fetchPayments = useCallback(
     async (
@@ -167,7 +169,7 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
       yearSemester: YearSemesterFilter,
       status: PaymentStatusFilter,
       sorting: SortingState,
-      memberKeyword: string
+      memberKeyword: string,
     ): Promise<void> => {
       setIsPaymentsLoading(true);
       try {
@@ -191,18 +193,13 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
         }
 
         setPaymentData(data);
-        setPaymentPagination((prev) => ({
-          ...prev,
-          pageIndex: data.page,
-          pageSize: data.size,
-        }));
       } catch {
         showError(resolvePaymentErrorMessage());
       } finally {
         setIsPaymentsLoading(false);
       }
     },
-    []
+    [],
   );
 
   const fetchTransactions = useCallback(
@@ -213,7 +210,7 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
       sorting: SortingState,
       depositorKeyword: string,
       from: string,
-      to: string
+      to: string,
     ): Promise<void> => {
       setIsTransactionsLoading(true);
       try {
@@ -225,7 +222,7 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
           sort: serializeSortingState(
             sorting,
             TRANSACTION_SORT_MAP,
-            "transactionTime,desc"
+            "transactionTime,desc",
           ),
           depositorKeyword,
           from: from || undefined,
@@ -243,27 +240,27 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
         }
 
         setTransactionData(data);
-        setTransactionPagination((prev) => ({
-          ...prev,
-          pageIndex: data.page,
-          pageSize: data.size,
-        }));
       } catch {
         showError(resolvePaymentErrorMessage());
       } finally {
         setIsTransactionsLoading(false);
       }
     },
-    []
+    [],
   );
 
   useEffect(() => {
+    if (initializedRef.current) {
+      return;
+    }
+    initializedRef.current = true;
+
     void fetchPayments(
       paymentPagination,
       paymentYearSemester,
       paymentStatus,
       paymentSorting,
-      paymentMemberKeyword
+      paymentMemberKeyword,
     );
     void fetchTransactions(
       transactionPagination,
@@ -272,23 +269,23 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
       transactionSorting,
       transactionDepositorKeyword,
       transactionFrom,
-      transactionTo
+      transactionTo,
     );
   }, [
     fetchPayments,
     fetchTransactions,
-    paymentMemberKeyword,
     paymentPagination,
-    paymentSorting,
-    paymentStatus,
     paymentYearSemester,
+    paymentStatus,
+    paymentSorting,
+    paymentMemberKeyword,
+    transactionPagination,
+    transactionYearSemester,
+    transactionType,
+    transactionSorting,
     transactionDepositorKeyword,
     transactionFrom,
-    transactionPagination,
-    transactionSorting,
     transactionTo,
-    transactionType,
-    transactionYearSemester,
   ]);
 
   const handlePaymentSearch = async (): Promise<void> => {
@@ -302,7 +299,7 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
       paymentYearSemester,
       paymentStatus,
       paymentSorting,
-      paymentMemberKeyword
+      paymentMemberKeyword,
     );
   };
 
@@ -310,7 +307,7 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
     const nextSorting = normalizeSingleSorting(
       updater,
       paymentSorting,
-      DEFAULT_PAYMENT_SORTING
+      DEFAULT_PAYMENT_SORTING,
     );
     const nextPagination = {
       ...paymentPagination,
@@ -324,12 +321,12 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
       paymentYearSemester,
       paymentStatus,
       nextSorting,
-      paymentMemberKeyword
+      paymentMemberKeyword,
     );
   };
 
   const handlePaymentPaginationChange = (
-    updater: Updater<PaginationState>
+    updater: Updater<PaginationState>,
   ): void => {
     const nextPagination = functionalUpdate(updater, paymentPagination);
 
@@ -347,20 +344,20 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
       paymentYearSemester,
       paymentStatus,
       paymentSorting,
-      paymentMemberKeyword
+      paymentMemberKeyword,
     );
   };
 
   const handleForceComplete = async (paymentId: number): Promise<void> => {
     const firstConfirmed = await showConfirm(
-      "위험한 작업입니다. 해당 결제를 강제로 완료 처리하시겠습니까?"
+      "위험한 작업입니다. 해당 결제를 강제로 완료 처리하시겠습니까?",
     );
     if (!firstConfirmed) {
       return;
     }
 
     const secondConfirmed = await showConfirm(
-      "최종 확인: 결제 완료 이벤트가 즉시 반영됩니다. 정말 실행하시겠습니까?"
+      "최종 확인: 결제 완료 이벤트가 즉시 반영됩니다. 정말 실행하시겠습니까?",
     );
     if (!secondConfirmed) {
       return;
@@ -383,7 +380,7 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
           paymentYearSemester,
           paymentStatus,
           paymentSorting,
-          paymentMemberKeyword
+          paymentMemberKeyword,
         ),
         fetchTransactions(
           transactionPagination,
@@ -392,7 +389,7 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
           transactionSorting,
           transactionDepositorKeyword,
           transactionFrom,
-          transactionTo
+          transactionTo,
         ),
       ]);
     } catch {
@@ -420,17 +417,17 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
       transactionSorting,
       transactionDepositorKeyword,
       transactionFrom,
-      transactionTo
+      transactionTo,
     );
   };
 
   const handleTransactionSortingChange = (
-    updater: Updater<SortingState>
+    updater: Updater<SortingState>,
   ): void => {
     const nextSorting = normalizeSingleSorting(
       updater,
       transactionSorting,
-      DEFAULT_TRANSACTION_SORTING
+      DEFAULT_TRANSACTION_SORTING,
     );
     const nextPagination = {
       ...transactionPagination,
@@ -446,12 +443,12 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
       nextSorting,
       transactionDepositorKeyword,
       transactionFrom,
-      transactionTo
+      transactionTo,
     );
   };
 
   const handleTransactionPaginationChange = (
-    updater: Updater<PaginationState>
+    updater: Updater<PaginationState>,
   ): void => {
     const nextPagination = functionalUpdate(updater, transactionPagination);
 
@@ -474,7 +471,7 @@ export function usePaymentPageState(): UsePaymentPageStateResult {
       transactionSorting,
       transactionDepositorKeyword,
       transactionFrom,
-      transactionTo
+      transactionTo,
     );
   };
 
