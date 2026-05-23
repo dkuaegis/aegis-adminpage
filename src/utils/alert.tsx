@@ -12,6 +12,12 @@ export const showSuccess = (message: string) => {
   });
 };
 
+export const showInfo = (message: string) => {
+  toast.info(message, {
+    duration: 2500,
+  });
+};
+
 export const showConfirm = async (message: string): Promise<boolean> => {
   return window.confirm(message);
 };

@@ -6,7 +6,7 @@ import { PostMemberActivities } from "@/api/activity/post-member-activities";
 import { Button } from "@/components/ui/button";
 import { useSessionKeepAlive } from "@/hooks/useSessionKeepAlive";
 import { resolveAdminErrorMessage } from "@/lib/errors/admin-error";
-import { showError, showSuccess } from "@/utils/alert";
+import { showError, showInfo, showSuccess } from "@/utils/alert";
 
 interface QRScannerProps {
   activityId: number;
@@ -26,6 +26,7 @@ const QRScannerComponent: React.FC<QRScannerProps> = ({
   const lastProcessedQR = useRef("");
   const lastScanTime = useRef(0);
   const isThrottled = useRef(false);
+  const processedMemberIdsRef = useRef(new Set<number>());
 
   const resetProcessingState = useCallback((delayMs: number) => {
     window.setTimeout(() => {
@@ -77,6 +78,12 @@ const QRScannerComponent: React.FC<QRScannerProps> = ({
           return;
         }
 
+        if (processedMemberIdsRef.current.has(qrResult.data.memberId)) {
+          showInfo(`${qrResult.data.name}님은 이미 출석 처리되었습니다.`);
+          resetProcessingState(1000);
+          return;
+        }
+
         const submitResponse = await PostMemberActivities(
           activityId,
           qrResult.data.memberId
@@ -84,15 +91,14 @@ const QRScannerComponent: React.FC<QRScannerProps> = ({
         if (!submitResponse.ok) {
           switch (submitResponse.status) {
             case 400:
-              showError("잘못된 요청입니다. 관리자에게 문의해주세요.");
+              showError("출석 처리에 실패했습니다. 관리자에게 문의해주세요.");
               break;
             case 404:
-              showError(
-                "해당 활동 또는 회원을 찾을 수 없습니다. 관리자에게 문의해주세요."
-              );
+              showError("회원 또는 행사 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.");
               break;
             case 409:
-              showError("이미 참여한 활동입니다.");
+              showInfo(`${qrResult.data.name}님은 이미 출석 처리되었습니다.`);
+              processedMemberIdsRef.current.add(qrResult.data.memberId);
               break;
             default:
               showError(
@@ -107,7 +113,8 @@ const QRScannerComponent: React.FC<QRScannerProps> = ({
           return;
         }
 
-        showSuccess(`${qrResult.data.name}님이 참석했습니다.`);
+        processedMemberIdsRef.current.add(qrResult.data.memberId);
+        showSuccess(`${qrResult.data.name}님 출석이 완료되었습니다.`);
         resetProcessingState(1000);
       } catch (error) {
         console.error("QR 코드 처리 중 오류 발생:", error);
