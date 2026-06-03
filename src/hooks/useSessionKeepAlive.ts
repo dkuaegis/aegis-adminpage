@@ -31,8 +31,7 @@ export function useSessionKeepAlive({
         const response = await Members();
         const isAuthFailure =
           response.status === 401 || response.status === 403;
-        const isRoleMismatch =
-          response.ok && (!response.data || response.data.role !== "ADMIN");
+        const isRoleMismatch = response.ok && response.data?.role !== "ADMIN";
         const unauthorized = isAuthFailure || isRoleMismatch;
         if (active && unauthorized) {
           onUnauthorized?.();

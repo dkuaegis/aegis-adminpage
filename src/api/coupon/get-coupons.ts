@@ -26,6 +26,8 @@ export async function getCoupons(
 
   return requestApi<AdminCouponPageResponse>(
     `/admin/coupons?${params.toString()}`,
-    { method: "GET" }
+    {
+      method: "GET",
+    }
   );
 }

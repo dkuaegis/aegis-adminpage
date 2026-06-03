@@ -18,7 +18,7 @@ export function normalizeSingleSorting(
   const resolved = functionalUpdate(updater, current);
   const first = resolved[0];
 
-  if (!first || !first.id) {
+  if (!first?.id) {
     return fallback;
   }
 

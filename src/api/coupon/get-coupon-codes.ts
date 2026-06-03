@@ -26,6 +26,8 @@ export async function getCouponCodes(
 
   return requestApi<AdminCouponCodePageResponse>(
     `/admin/coupons/code?${params.toString()}`,
-    { method: "GET" }
+    {
+      method: "GET",
+    }
   );
 }

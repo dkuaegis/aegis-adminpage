@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.4/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.16/schema.json",
   "assist": {
     "actions": {
       "source": {
@@ -8,12 +8,28 @@
     }
   },
   "files": {
+    "maxSize": 3145728,
     "includes": [
       "src/**/*",
-      "!**/.next",
-      "!**/node_modules",
+      "app/**/*",
+      "*.ts",
+      "*.tsx",
+      "*.js",
+      "*.jsx",
+      "*.mjs",
+      "*.cjs",
+      "*.json",
+      "*.jsonc",
+      "*.css",
+      "!dist",
+      "!build",
+      "!node_modules",
+      "!coverage",
+      "!public",
       "!src/assets",
-      "!src/components/ui"
+      "!app/assets",
+      "!package-lock.json",
+      "!pnpm-lock.yaml"
     ]
   },
   "linter": {
@@ -26,16 +42,14 @@
         "useExhaustiveDependencies": "error"
       },
       "nursery": {
-        "useSortedClasses": {
-          "level": "error",
-          "fix": "safe",
-          "options": {}
-        }
+        "useSortedClasses": "off"
       },
       "suspicious": {
-        "noArrayIndexKey": "warn"
+        "noArrayIndexKey": "warn",
+        "noDuplicateProperties": "warn"
       },
       "complexity": {
+        "noImportantStyles": "warn",
         "useArrowFunction": "error"
       }
     }

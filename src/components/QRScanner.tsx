@@ -94,7 +94,9 @@ const QRScannerComponent: React.FC<QRScannerProps> = ({
               showError("출석 처리에 실패했습니다. 관리자에게 문의해주세요.");
               break;
             case 404:
-              showError("회원 또는 행사 정보를 찾을 수 없습니다. 관리자에게 문의해주세요.");
+              showError(
+                "회원 또는 행사 정보를 찾을 수 없습니다. 관리자에게 문의해주세요."
+              );
               break;
             case 409:
               showInfo(`${qrResult.data.name}님은 이미 출석 처리되었습니다.`);

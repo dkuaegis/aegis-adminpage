@@ -188,8 +188,8 @@ export const PointGrantSection: React.FC<PointGrantSectionProps> = ({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {batchResult.results.map((result, index) => (
-                    <TableRow key={`${result.memberId}-${index}`}>
+                  {batchResult.results.map((result) => (
+                    <TableRow key={result.memberId}>
                       <TableCell>{result.memberId}</TableCell>
                       <TableCell>{result.status}</TableCell>
                       <TableCell>{result.pointTransactionId ?? "-"}</TableCell>
