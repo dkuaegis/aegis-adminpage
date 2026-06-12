@@ -49,7 +49,7 @@ const MemberManagementPage: React.FC = () => {
           onSelectMember={state.handleSelectMember}
         />
 
-        <div className="sticky top-4">
+        <div className="sticky top-20">
           <MemberDetailSection
             selectedMember={state.selectedMember}
             detailYearSemester={state.detailYearSemester}
