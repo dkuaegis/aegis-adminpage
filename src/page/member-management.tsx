@@ -49,17 +49,19 @@ const MemberManagementPage: React.FC = () => {
           onSelectMember={state.handleSelectMember}
         />
 
-        <MemberDetailSection
-          selectedMember={state.selectedMember}
-          detailYearSemester={state.detailYearSemester}
-          semesterOptions={state.semesterOptions}
-          isDetailLoading={state.isDetailLoading}
-          timelineItems={state.timelineItems}
-          activityDetail={state.activityDetail}
-          formatDateTime={formatDateTime}
-          resolveSemesterLabel={state.resolveSemesterLabel}
-          onDetailSemesterChange={state.handleDetailSemesterChange}
-        />
+        <div className="sticky top-4">
+          <MemberDetailSection
+            selectedMember={state.selectedMember}
+            detailYearSemester={state.detailYearSemester}
+            semesterOptions={state.semesterOptions}
+            isDetailLoading={state.isDetailLoading}
+            timelineItems={state.timelineItems}
+            activityDetail={state.activityDetail}
+            formatDateTime={formatDateTime}
+            resolveSemesterLabel={state.resolveSemesterLabel}
+            onDetailSemesterChange={state.handleDetailSemesterChange}
+          />
+        </div>
       </div>
     </div>
   );
